@@ -5,7 +5,7 @@
     "imagemin": "^4.0.0",
     "natives": "^1.1.4",
     "bower": "^1.3.9",
-    "bower-installer": "https://github.com/bessdsv/bower-installer.git#temp"
+    "bower-installer": "git+https://github.com/bessdsv/bower-installer.git#temp"
   },
   "devDependencies": {
     "grunt": "^0.4.5",
@@ -29,6 +29,7 @@
     "grunt-karma": "^0.12.0",
     "grunt-newer": "^0.7.0",
     "grunt-ng-annotate": "0.10.0",
+    "grunt-shell": "^1.1.0",
     "grunt-svgmin": "^0.4.0",
     "grunt-usemin": "^2.1.1",
     "grunt-wiredep": "^1.7.0",
@@ -40,6 +41,7 @@
     "karma-jasmine-jquery": "^0.1.1",
     "karma-phantomjs-launcher": "~0.1.4",
     "load-grunt-tasks": "^0.4.0",
+    "sass": "^1.49.11",
     "time-grunt": "^0.3.1"
   },
   "engines": {

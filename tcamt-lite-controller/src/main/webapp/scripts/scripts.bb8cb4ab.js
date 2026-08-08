@@ -2543,7 +2543,7 @@ app.config([
         $httpProvider.defaults.headers.common['Access-Control-Allow-Headers'] = '*';
     }
 ]);
-app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, userLoaderService,  userInfoService, $http, AppInfo, StorageService, $templateCache, $window, notifications, $q) {
+app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, userLoaderService,  userInfoService, $http, AppInfo, StorageService, $templateCache, $window, notifications, $q, FroalaOptionsService) {
     $rootScope.appInfo = {};
     userInfoService.loadFromServer();
 
@@ -2559,37 +2559,7 @@ app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, u
     // load app info
     AppInfo.get().then(function (appInfo) {
         $rootScope.appInfo = appInfo;
-        console.log("INIT FROALA");
-        console.log($rootScope.appInfo.uploadedImagesUrl);
-        $rootScope.froalaEditorOptions = {
-            placeholderText: '',
-            imageUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
-            fileUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            fileAllowedTypes: ['application/pdf', 'application/msword', 'application/x-pdf', 'text/plain', 'application/xml','text/xml'],
-            charCounterCount: false,
-            quickInsertTags: [''],
-            immediateAngularModelUpdate:true,
-            events: {
-                'froalaEditor.initialized': function () {
-
-                },
-                'froalaEditor.file.error': function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                },
-                'froalaEditor.image.error ':function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                }
-            },
-            key: 'Rg1Wb2KYd1Td1WIh1CVc2F==',
-            imageResize: true,
-            imageEditButtons: ['imageReplace', 'imageAlign', 'imageRemove', '|', 'imageLink', 'linkOpen', 'linkEdit', 'linkRemove', '-', 'imageAlt'],
-            pastePlain: true
-        };
+        $rootScope.froalaEditorOptions = FroalaOptionsService.build(appInfo, $rootScope);
         httpHeaders.common['appVersion'] = appInfo.version;
         var prevVersion = StorageService.getAppVersion(StorageService.APP_VERSION);
         StorageService.setAppVersion(appInfo.version);
@@ -3136,6 +3106,54 @@ angular.module('tcl').factory('ElementUtils',
         };
         return ElementUtils;
     }]);
+
+/**
+ * Builds Froala editor options from server-provided AppInfo (including froalaKey).
+ */
+angular.module('tcl').factory('FroalaOptionsService', function () {
+
+    function buildEvents($rootScope) {
+        return {
+            'froalaEditor.initialized': function () {
+            },
+            'froalaEditor.file.error': function (e, editor, error) {
+                $rootScope.msg().text = error.text;
+                $rootScope.msg().type = error.type;
+                $rootScope.msg().show = true;
+            },
+            'froalaEditor.image.error ': function (e, editor, error) {
+                $rootScope.msg().text = error.text;
+                $rootScope.msg().type = error.type;
+                $rootScope.msg().show = true;
+            }
+        };
+    }
+
+    return {
+        build: function (appInfo, $rootScope, extras) {
+            var uploadedImagesUrl = (appInfo && appInfo.uploadedImagesUrl) ? appInfo.uploadedImagesUrl : '';
+            var options = {
+                placeholderText: '',
+                imageUploadURL: uploadedImagesUrl + '/upload',
+                imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
+                fileUploadURL: uploadedImagesUrl + '/upload',
+                fileAllowedTypes: ['application/pdf', 'application/msword', 'application/x-pdf', 'text/plain', 'application/xml', 'text/xml'],
+                charCounterCount: false,
+                quickInsertTags: [''],
+                immediateAngularModelUpdate: true,
+                events: buildEvents($rootScope),
+                key: (appInfo && appInfo.froalaKey) ? appInfo.froalaKey : '',
+                imageResize: true,
+                imageEditButtons: ['imageReplace', 'imageAlign', 'imageRemove', '|', 'imageLink', 'linkOpen', 'linkEdit', 'linkRemove', '-', 'imageAlt'],
+                pastePlain: true
+            };
+            if (extras) {
+                angular.extend(options, extras);
+            }
+            return options;
+        }
+    };
+});
 
 /**
  * Created by haffo on 3/9/16.
@@ -4730,35 +4748,6 @@ angular.module('tcl').controller('DocCtrl', function ($scope, $rootScope, $docum
 
     $scope.initDoc = function () {
         if(!$rootScope.tcamtDocument) $rootScope.loadDocument();
-
-        $rootScope.froalaEditorOptions = {
-            placeholderText: '',
-            imageUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
-            fileUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            fileAllowedTypes: ['application/pdf', 'application/msword', 'application/x-pdf', 'text/plain', 'application/xml','text/xml'],
-            charCounterCount: false,
-            quickInsertTags: [''],
-            immediateAngularModelUpdate:true,
-            events: {
-                'froalaEditor.initialized': function () {
-                },
-                'froalaEditor.file.error': function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                },
-                'froalaEditor.image.error ':function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                }
-            },
-            key: 'Rg1Wb2KYd1Td1WIh1CVc2F==',
-            imageResize: true,
-            imageEditButtons: ['imageReplace', 'imageAlign', 'imageRemove', '|', 'imageLink', 'linkOpen', 'linkEdit', 'linkRemove', '-', 'imageAlt'],
-            pastePlain: true
-        };
     };
 
     $scope.isEditMode = function () {
@@ -6840,34 +6829,6 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         waitingDialog.hide();
     };
     $scope.initTestPlans = function () {
-        $rootScope.froalaEditorOptions = {
-            placeholderText: '',
-            imageUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
-            fileUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            fileAllowedTypes: ['application/pdf', 'application/msword', 'application/x-pdf', 'text/plain', 'application/xml','text/xml'],
-            charCounterCount: false,
-            quickInsertTags: [''],
-            immediateAngularModelUpdate:true,
-            events: {
-                'froalaEditor.initialized': function () {
-                },
-                'froalaEditor.file.error': function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                },
-                'froalaEditor.image.error ':function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                }
-            },
-            key: 'Rg1Wb2KYd1Td1WIh1CVc2F==',
-            imageResize: true,
-            imageEditButtons: ['imageReplace', 'imageAlign', 'imageRemove', '|', 'imageLink', 'linkOpen', 'linkEdit', 'linkRemove', '-', 'imageAlt'],
-            pastePlain: true
-        };
         if(!$rootScope.profiles || $rootScope.profiles == [] ) $rootScope.loadProfiles();
         $scope.loadTestPlans();
         $scope.loadTemplate();

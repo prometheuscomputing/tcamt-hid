@@ -46,6 +46,9 @@ public class AppInfo implements Serializable {
 
 	@Value("${admin.email}")
 	private String adminEmail;
+
+	@Value("${froala.key:}")
+	private String froalaKey;
 	
 	@Value("${connect.uploadTokenContext}")
 	private String connectUploadTokenContext;
@@ -110,6 +113,14 @@ public class AppInfo implements Serializable {
 
 	public void setUploadedImagesUrl(String uploadedImagesUrl) {
 		this.uploadedImagesUrl = uploadedImagesUrl;
+	}
+
+	public String getFroalaKey() {
+		return froalaKey;
+	}
+
+	public void setFroalaKey(String froalaKey) {
+		this.froalaKey = froalaKey;
 	}
 
 	/**
