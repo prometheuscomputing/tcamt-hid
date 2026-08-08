@@ -57,9 +57,9 @@ module.exports = function(grunt) {
 					files : [ 'test/spec/{,*/}*.js' ],
 					tasks : [ 'newer:jshint:test', 'karma' ]
 				},
-				compass : {
+				sassSource : {
 					files : [ '<%= yeoman.app %>/styles/{,*/}*.{scss,sass}' ],
-					tasks : [ 'compass:server', 'autoprefixer' ]
+					tasks : [ 'shell:sassCompile', 'autoprefixer' ]
 				},
 				gruntfile : {
 					files : [ 'Gruntfile.js' ]
@@ -267,6 +267,12 @@ module.exports = function(grunt) {
 				}
 			},
 
+			shell : {
+				sassCompile : {
+					command : 'node_modules/.bin/sass app/styles/main.scss .tmp/styles/main.css --load-path=bower_components'
+				}
+			},
+
 			// Renames files for browser caching purposes
 			filerev : {
 				dist : {
@@ -422,7 +428,12 @@ module.exports = function(grunt) {
 							flatten : true,
 							cwd : '<%= yeoman.app %>',
 							dest : '<%= yeoman.dist %>/fonts',
-							src : [ 'bower_components/sass-bootstrap/fonts/*.*' ]
+							src : [
+								'fonts/*.*',
+								'bower_components/sass-bootstrap/fonts/*.*',
+								'bower_components/bootstrap-material-design/dist/fonts/Material-Design-Icons.*',
+								'bower_components/font-awesome/fonts/*.*'
+							]
 						} ]
 				},
 				styles : {
@@ -435,9 +446,9 @@ module.exports = function(grunt) {
 
 			// Run some tasks in parallel to speed up the build process
 			concurrent : {
-				server : [ 'compass:server' ],
-				test : [ 'compass' ],
-				dist : [ 'compass:dist', 'imagemin', 'svgmin' ]
+				server : [ 'shell:sassCompile' ],
+				test : [ 'shell:sassCompile' ],
+				dist : [ 'shell:sassCompile', 'imagemin', 'svgmin' ]
 			},
 
 			// Test settings
@@ -490,6 +501,21 @@ module.exports = function(grunt) {
 		'cdnify',
 		'cssmin',
 		//  'uglify',
+		'filerev',
+		'usemin',
+		'htmlmin' ]);
+
+	// Same as build but skips cdnify (broken on modern Node; not required for self-hosted assets).
+	grunt.registerTask('build:release', [ 'clean:dist',
+		'includeSource:prod',
+		'wiredep:prod',
+		'useminPrepare',
+		'concurrent:dist',
+		'autoprefixer',
+		'concat',
+		'ngAnnotate',
+		'copy:dist',
+		'cssmin',
 		'filerev',
 		'usemin',
 		'htmlmin' ]);

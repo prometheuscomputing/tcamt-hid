@@ -353,7 +353,7 @@ app.config([
         $httpProvider.defaults.headers.common['Access-Control-Allow-Headers'] = '*';
     }
 ]);
-app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, userLoaderService,  userInfoService, $http, AppInfo, StorageService, $templateCache, $window, notifications, $q) {
+app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, userLoaderService,  userInfoService, $http, AppInfo, StorageService, $templateCache, $window, notifications, $q, FroalaOptionsService) {
     $rootScope.appInfo = {};
     userInfoService.loadFromServer();
 
@@ -369,37 +369,7 @@ app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, u
     // load app info
     AppInfo.get().then(function (appInfo) {
         $rootScope.appInfo = appInfo;
-        console.log("INIT FROALA");
-        console.log($rootScope.appInfo.uploadedImagesUrl);
-        $rootScope.froalaEditorOptions = {
-            placeholderText: '',
-            imageUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
-            fileUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            fileAllowedTypes: ['application/pdf', 'application/msword', 'application/x-pdf', 'text/plain', 'application/xml','text/xml'],
-            charCounterCount: false,
-            quickInsertTags: [''],
-            immediateAngularModelUpdate:true,
-            events: {
-                'froalaEditor.initialized': function () {
-
-                },
-                'froalaEditor.file.error': function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                },
-                'froalaEditor.image.error ':function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                }
-            },
-            key: 'Rg1Wb2KYd1Td1WIh1CVc2F==',
-            imageResize: true,
-            imageEditButtons: ['imageReplace', 'imageAlign', 'imageRemove', '|', 'imageLink', 'linkOpen', 'linkEdit', 'linkRemove', '-', 'imageAlt'],
-            pastePlain: true
-        };
+        $rootScope.froalaEditorOptions = FroalaOptionsService.build(appInfo, $rootScope);
         httpHeaders.common['appVersion'] = appInfo.version;
         var prevVersion = StorageService.getAppVersion(StorageService.APP_VERSION);
         StorageService.setAppVersion(appInfo.version);

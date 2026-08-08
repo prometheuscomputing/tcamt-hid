@@ -605,34 +605,6 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         waitingDialog.hide();
     };
     $scope.initTestPlans = function () {
-        $rootScope.froalaEditorOptions = {
-            placeholderText: '',
-            imageUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
-            fileUploadURL: $rootScope.appInfo.uploadedImagesUrl + "/upload",
-            fileAllowedTypes: ['application/pdf', 'application/msword', 'application/x-pdf', 'text/plain', 'application/xml','text/xml'],
-            charCounterCount: false,
-            quickInsertTags: [''],
-            immediateAngularModelUpdate:true,
-            events: {
-                'froalaEditor.initialized': function () {
-                },
-                'froalaEditor.file.error': function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                },
-                'froalaEditor.image.error ':function(e, editor, error){
-                    $rootScope.msg().text= error.text;
-                    $rootScope.msg().type= error.type;
-                    $rootScope.msg().show= true;
-                }
-            },
-            key: 'Rg1Wb2KYd1Td1WIh1CVc2F==',
-            imageResize: true,
-            imageEditButtons: ['imageReplace', 'imageAlign', 'imageRemove', '|', 'imageLink', 'linkOpen', 'linkEdit', 'linkRemove', '-', 'imageAlt'],
-            pastePlain: true
-        };
         if(!$rootScope.profiles || $rootScope.profiles == [] ) $rootScope.loadProfiles();
         $scope.loadTestPlans();
         $scope.loadTemplate();
