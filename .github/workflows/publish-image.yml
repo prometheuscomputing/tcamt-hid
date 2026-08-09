@@ -1,0 +1,70 @@
+name: Publish TCAMT image
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag (e.g. 2.1.0-transition.2)
+        required: true
+        type: string
+      ref:
+        description: Branch or tag to build
+        required: false
+        default: transition
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Set up Node 13
+        uses: actions/setup-node@v4
+        with:
+          node-version: "13.12.0"
+          cache: npm
+          cache-dependency-path: tcamt-lite-client/package-lock.json
+
+      - name: Frontend build
+        working-directory: tcamt-lite-client
+        run: |
+          npm install
+          npx bower install --allow-root
+          npx grunt build --prod
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "8"
+          cache: maven
+
+      - name: Maven package
+        run: mvn clean install -DskipTests -B
+
+      - name: Verify no secrets in WAR
+        run: bash scripts/verify-no-secrets.sh
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/prometheuscomputing/tcamt-hid:${{ inputs.tag }}
+            ghcr.io/prometheuscomputing/tcamt-hid:transition

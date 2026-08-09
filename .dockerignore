@@ -1,0 +1,22 @@
+# Keep Docker build context minimal. The image only needs error.html + tcamt.war.
+# Never copy env files, local overrides, or full source trees into the build context.
+
+.git
+.github
+.idea
+**/.env
+**/.env.*
+**/secrets/
+**/*.pem
+**/*.key
+tcamt-lite-client/
+hit-resource-client/
+tcamt-acmgt/
+tcamt-lite-domain/
+tcamt-lite-repo/
+tcamt-lite-service/
+tcamt-lite-controller/src/
+tcamt-lite-controller/target/classes/
+tcamt-lite-controller/target/test-classes/
+tcamt-lite-controller/target/tcamt/
+!tcamt-lite-controller/target/tcamt.war
