@@ -145,9 +145,9 @@ TCAMT uses **Froala v2** (`angular-froala` ~2.3.4 in `bower.json`) for test-stor
 |------------|------------|
 | **Properties file** | `froala.key=` in `tcamt-lite-controller/src/main/resources/app-web-config.properties` |
 | **JVM system property** | `-Dfroala.key=YOUR_KEY` on Tomcat / `JAVA_OPTS` |
-| **Docker (local Compose)** | `FROALA_KEY=...` in `tcamt/.env` — passed through by `entrypoint.sh` as `-Dfroala.key=...` |
+| **Docker (local Compose)** | `FROALA_KEY=...` in `tcamt/.env` under **`healthit-local-setup`** — passed through by `entrypoint.sh` as `-Dfroala.key=...` |
 
-Example for local Docker (`healthit-local-setup/tcamt/.env`):
+Example (`healthit-local-setup/tcamt/.env`):
 
 ```bash
 FROALA_KEY=your-froala-v2-license-key
