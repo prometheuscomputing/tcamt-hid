@@ -235,7 +235,7 @@ Pre-built images are published to **GitHub Container Registry (GHCR)** from the 
 | `2.1.0-transition.2` (example) | Specific release build |
 | `transition` | Latest build from the `transition` branch |
 
-**Access:** HealthIT / `prometheuscomputing` team members with access to this repo **do not** need the package to be public. Use your own GitHub account — you do not need a token from whoever published the image.
+**Access:** Members of the [**healthit** team](https://github.com/orgs/prometheuscomputing/teams/healthit) with access to this repo **do not** need the package to be public. Use your own GitHub account — you do not need a token from whoever published the image.
 
 **One-time Docker login to GHCR:**
 
@@ -263,7 +263,7 @@ App context path: **`/tcamt/`** (e.g. `http://host:8080/tcamt/`).
 | **MySQL** | Application database |
 | **MongoDB** | Test artifacts / grid storage |
 
-If `docker pull` is denied, ask an org admin to confirm your team has **read** access under **Packages → tcamt-hid → Package settings → Manage access**.
+If `docker pull` is denied, ask an org admin to confirm the [**healthit** team](https://github.com/orgs/prometheuscomputing/teams/healthit) has **read** access under **Packages → tcamt-hid → Package settings → Manage access**.
 
 ### Publishing via GitHub Actions (maintainers)
 
