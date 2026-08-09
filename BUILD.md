@@ -226,62 +226,16 @@ The Dockerfile copies only **`error.html`** and **`tcamt.war`**. `.dockerignore`
 
 ### Pulling a published image (HealthIT team)
 
-Pre-built images are published to **GitHub Container Registry (GHCR)** when a **GitHub Release is published** on this repo. Merging a PR alone does **not** publish an image — create a release to ship a version.
-
-**Image:** `ghcr.io/prometheuscomputing/tcamt-hid`
-
-| Tag | Meaning |
-|-----|---------|
-| `2.1.0` | Release version (from GitHub Release tag; `v` prefix stripped if present) |
-| `v2.1.0` | Same release, exact Git tag name (when the release tag includes `v`) |
-| `latest` | Most recently published release |
-| `2.1.0-transition.2` | Earlier manual publish (legacy) |
-
-**Access:** Members of the [**healthit** team](https://github.com/orgs/prometheuscomputing/teams/healthit) with access to this repo **do not** need the package to be public. Use your own GitHub account — you do not need a token from whoever published the image.
-
-**One-time Docker login to GHCR:**
-
-```bash
-echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
-```
-
-Create the token at **GitHub → Settings → Developer settings → Personal access tokens** with at least **`read:packages`** (and **`repo`** if the package is private).
-
-**Pull and run:**
+See **`DOCKER.md`** for image URLs, versioning, release-based tags, and pull instructions.
 
 ```bash
 docker pull ghcr.io/prometheuscomputing/tcamt-hid:2.1.0
-# or floating latest release:
 docker pull ghcr.io/prometheuscomputing/tcamt-hid:latest
 ```
 
-App context path: **`/tcamt/`** (e.g. `http://host:8080/tcamt/`).
+### Manual publish from source (emergency)
 
-**Runtime configuration (not in the image):**
-
-| Setting | Notes |
-|---------|--------|
-| **`FROALA_KEY`** | Froala v2 license — set in env / `JAVA_OPTS` / Compose `.env` |
-| **MySQL** | Application database |
-| **MongoDB** | Test artifacts / grid storage |
-
-If `docker pull` is denied, ask an org admin to confirm the [**healthit** team](https://github.com/orgs/prometheuscomputing/teams/healthit) has **read** access under **Packages → tcamt-hid → Package settings → Manage access**.
-
-### Publishing via GitHub Actions (maintainers)
-
-**Version = GitHub Release tag.** The workflow (**Publish TCAMT image**) runs when you **publish a release** (not on draft save).
-
-1. Merge changes into **`transition`** (via PR).
-2. Create a Git tag on that commit, e.g. **`v2.1.0`** or **`2.1.0`**.
-3. **GitHub → Releases → Draft a new release** → choose the tag → **Publish release**.
-4. Actions builds the image and pushes:
-   - `ghcr.io/prometheuscomputing/tcamt-hid:<tag>` (exact release tag)
-   - `ghcr.io/prometheuscomputing/tcamt-hid:<version>` (`v` stripped, e.g. `2.1.0`)
-   - `ghcr.io/prometheuscomputing/tcamt-hid:latest`
-
-Use semver tags (`2.1.0`, `2.1.1`, …) so deployers can pin a clear version. `pom.xml` (`1.0.0-SNAPSHOT`) is **not** used for Docker tags today.
-
-Manual publish (emergency only; requires `write:packages` on your token):
+Prefer publishing via **GitHub Release** (see **`DOCKER.md`**). Local fallback:
 
 ```bash
 cd tcamt-lite-client && npx grunt build --prod && cd ..
