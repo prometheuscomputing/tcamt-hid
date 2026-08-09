@@ -15,7 +15,7 @@ public class RemoveTps {
 		// TODO Auto-generated method stub
 		
 		
-		SSLHL7v2ResourceClient client = new SSLHL7v2ResourceClient("https://hit-dev.nist.gov:8099/gvt", "wakili", "Ae725055");
+		SSLHL7v2ResourceClient client = new SSLHL7v2ResourceClient("https://tools.valitheus.com/gvt", "wakili", "Ae725055");
 		client.delete(12L, ResourceType.TEST_PLAN);
 		client.delete(8863092376288428032L, ResourceType.TEST_PLAN);
 		client.delete(1123989L, ResourceType.TEST_PLAN);

@@ -108,8 +108,7 @@ public class TestPlanController extends CommonController {
   @Autowired
   private SimpleMailMessage templateMessage;
 
-//  private static String GVT_URL = "https://hit-dev.nist.gov:8099/gvt/";
-   private static String GVT_URL = "https://hl7v2.gvt.nist.gov/gvt/";
+  private static String GVT_URL = "https://tools.valitheus.com/gvt/";
 
   /**
    * 
