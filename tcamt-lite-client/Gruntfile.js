@@ -498,27 +498,15 @@ module.exports = function(grunt) {
 		'concat',
 		'ngAnnotate',
 		'copy:dist',
-		'cdnify',
+		// cdnify skipped: breaks on Node 12+ (primordials); assets are self-hosted in the WAR
 		'cssmin',
 		//  'uglify',
 		'filerev',
 		'usemin',
 		'htmlmin' ]);
 
-	// Same as build but skips cdnify (broken on modern Node; not required for self-hosted assets).
-	grunt.registerTask('build:release', [ 'clean:dist',
-		'includeSource:prod',
-		'wiredep:prod',
-		'useminPrepare',
-		'concurrent:dist',
-		'autoprefixer',
-		'concat',
-		'ngAnnotate',
-		'copy:dist',
-		'cssmin',
-		'filerev',
-		'usemin',
-		'htmlmin' ]);
+	grunt.registerTask('build:prod', [ 'build' ]);
+	grunt.registerTask('build:release', [ 'build' ]);
 
 
 	grunt.registerTask('buildquick', [ 'clean:dist',

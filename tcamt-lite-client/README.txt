@@ -1,15 +1,22 @@
+TCAMT Lite — Frontend (tcamt-lite-client)
+=========================================
 
-Installation Instructions
+Full build instructions: see ../BUILD.md
 
-1) bower install
-Install all the bower dependencies found in bower.json
+Quick start
+-----------
 
-2) npm install
-Install all nodejs dependencies from package.json
+  cd tcamt-lite-client
+  nvm use              # Node 13.12.0 (.nvmrc)
+  npm install          # from package-lock.json — do not npm update
+  npx bower install    # first time only, if bower_components/ is missing
+  npx grunt build --prod   # production assets → ../tcamt-lite-controller/src/main/webapp/
+  cd ..
+  mvn clean install -DskipTests
 
-3) grunt build
-Build the project - minify the javascript file and update the htmnl files for performance optimization.
+Output WAR: tcamt-lite-controller/target/tcamt.war
 
-4) grunt server
-Start the application  on server port 9000 by default
+Development server
+------------------
 
+  npx grunt serve      # http://localhost:9000 (task is "serve", not "server")

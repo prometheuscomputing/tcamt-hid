@@ -1,50 +1,153 @@
-# Building TCAMT (WAR + Docker image)
+# Building TCAMT
 
-## What `build.sh` does
+How to build the **WAR** (frontend + Java backend) and optionally the **Docker** image.
 
-1. **`mvn clean install`** in **this repo** (`tcamt-2`) → builds the vendored **`hit-resource-client`** module (`gov.nist.hit.resources.deploy:hit-resource-client:2.0.3`), **`tcamt-acmgt`**, domain/repo/service/controller → **`tcamt-lite-controller/target/tcamt.war`**.
-2. **`docker buildx build`** → image `tcamt-prm/tcamt-webapp:<version>` (and optionally `:latest`).
+---
 
-You **do not** need a separate **hit-resource-client** checkout or **old-igamt** / **igamt-lite-acmgt**.
+## Quick start (full WAR)
 
-## In-repo module `hit-resource-client`
+From the repository root:
 
-Java sources under `hit-resource-client/src/main/java` are **vendored** from the standalone HIT **hit-resource-client** project (same Maven coordinates). They are compiled as **Java 8** via the parent **`tcamt-lite`** `maven-compiler-plugin` configuration so **JDK 11+** can build the whole reactor.
+```bash
+cd tcamt-lite-client
+nvm use                    # optional; uses Node 13.12.0 from .nvmrc
+npm install                # first time, or when package-lock.json changes
+npx bower install          # first time only, if bower_components/ is missing
+npx grunt build --prod   # production assets → tcamt-lite-controller/src/main/webapp/
+cd ..
+mvn clean install -DskipTests
+```
 
-## In-repo module `tcamt-acmgt`
+**Output:** `tcamt-lite-controller/target/tcamt.war`
 
-Java sources under `tcamt-acmgt/src/main/java/gov/nist/healthcare/nht/acmgt/` were **vendored** from the legacy **`igamt-lite-acmgt`** project (NIST public-domain headers preserved in each file). The original `igamt-lite-acmgt` POM depended on `igamt-lite-domain`, but **no** Java file in that module imported IGAMT types; that dependency was unused.
+Deploy to Tomcat at context path **`/tcamt`** (e.g. `http://localhost:8080/tcamt/`).
 
-**Removed from the vendored tree:** `SecurityRequestPostProcessors.java` (Spring MVC test helpers only; required extra test-only deps and is not used at runtime).
-
-## What you must provide
-
-| Flag | Meaning |
-|------|---------|
-| **`-v`** | Docker image tag (e.g. `1.0.0-local`) |
-| **`-l`** | (optional) Also tag **`tcamt-prm/tcamt-webapp:latest`** |
-| **`-p`** | (optional) **Push** to Docker Hub (after `docker login`) |
-
-## NIST Maven repository (parent `pom.xml`)
-
-Dependencies such as **`gov.nist:hl7-v2-validation`** and **`validation-proxy`** are resolved from NIST’s public Nexus (HTTPS):
-
-- `https://hit-nexus.nist.gov/repository/releases/`
-- `https://hit-nexus.nist.gov/repository/snapshots/`
-
-No manual JAR install is required if those endpoints are reachable from your network.
+---
 
 ## Prerequisites
 
-- **JDK 8** is what the POMs target; **JDK 11+** often works (this repo adds `javax.annotation-api` for `@PostConstruct` on newer JDKs).
-- **Maven 3.6+**
-- **Docker** (for images; **Buildx** optional—plain `docker build --load` from the repo root also works)
+### Backend
 
-## Command template
+| Tool | Version | Notes |
+|------|---------|-------|
+| **JDK** | **8+** (target **1.8**) | JDK 11+ works; POM compiles as Java 8 |
+| **Maven** | **3.6+** | |
+| **Network** | NIST Nexus reachable | `gov.nist:hl7-v2-validation`, `validation-proxy`, etc. |
+
+NIST Maven repositories (parent `pom.xml`):
+
+- `https://hit-nexus.nist.gov/repository/releases/`
+- `https://hit-nexus.nist.gov/repository/public/`
+- `https://hit-nexus.nist.gov/repository/snapshots/`
+
+### Frontend (`tcamt-lite-client/`)
+
+| Tool | Version | Notes |
+|------|---------|-------|
+| **Node.js** | **13.12.0** | Pinned in `tcamt-lite-client/.nvmrc` |
+| **npm** | **6.14.4** | Bundled with Node 13 |
+| **Bower** | via npm | `./node_modules/.bin/bower` |
+
+Key frontend stack (from `bower.json`):
+
+- Angular **1.5.5**, Angular Material **1.1.0**, Froala **~2.3.4**
+- Grunt **0.4.5** + **grunt-cli** **1.4.3**
+- Dart Sass **1.49.11** (via `sass` npm package)
+
+---
+
+## First-time setup (frontend)
 
 ```bash
+cd tcamt-lite-client
+nvm install 13.12.0 && nvm use    # if nvm is available
+npm install                       # installs from package-lock.json
+npx bower install                 # populates bower_components/
+```
+
+### Preserve existing `node_modules` and `bower_components`
+
+Both folders are **gitignored**. On a machine that already has them:
+
+- **Do not delete** working copies.
+- **Do not run** `npm update` or `bower update` — use `npm install` / `bower install` only.
+- **`package-lock.json`** and **`bower.json`** pin versions; commit lockfile changes intentionally.
+
+If installs fail on `git://` URLs:
+
+```bash
+git config --global url."https://github.com/".insteadOf "git://github.com/"
+```
+
+---
+
+## Build steps explained
+
+### 1. Frontend — `npx grunt build --prod`
+
+Runs the Grunt **`build`** task with the **`--prod`** flag, which:
+
+- Uses **`app/prod/`** sources (`includeSource:prod`, `wiredep:prod`)
+- Compiles SCSS with **Dart Sass** (not Ruby Compass)
+- Minifies and copies assets into **`tcamt-lite-controller/src/main/webapp/`**
+
+After `npm install`, you can also run `./node_modules/.bin/grunt build --prod`.
+
+Dev server (no WAR rebuild):
+
+```bash
+cd tcamt-lite-client
+npm install
+npx bower install    # if needed
+npx grunt serve      # http://localhost:9000
+```
+
+### 2. Backend — `mvn clean install`
+
+Builds all modules in the reactor:
+
+| Module | Artifact |
+|--------|----------|
+| `hit-resource-client/` | `hit-resource-client-2.0.3.jar` (vendored) |
+| `tcamt-acmgt/` | account management (vendored) |
+| `tcamt-lite-domain` … `tcamt-lite-service` | internal JARs |
+| `tcamt-lite-controller` | **`tcamt.war`** |
+
+No separate **hit-resource-client** checkout or **igamt-lite-acmgt** repo is required.
+
+Skip tests:
+
+```bash
+mvn clean install -DskipTests
+```
+
+Maven-only rebuild (UI unchanged):
+
+```bash
+mvn clean install -DskipTests
+```
+
+---
+
+## Docker image
+
+### What `build.sh` does
+
+1. **`mvn clean install -DskipTests`** in this repo
+2. **`docker buildx build`** → `tcamt-prm/tcamt-webapp:<version>`
+
+**Important:** run **`npx grunt build --prod`** in `tcamt-lite-client/` first if you changed frontend code — `build.sh` does not run Grunt.
+
+```bash
+cd tcamt-lite-client && npx grunt build --prod && cd ..
 ./build.sh -v 1.0.0-local -l
 ```
+
+| Flag | Meaning |
+|------|---------|
+| **`-v`** | Docker image tag (required), e.g. `1.0.0-local` |
+| **`-l`** | Also tag as `tcamt-prm/tcamt-webapp:latest` |
+| **`-p`** | Push to registry (after `docker login`) |
 
 Maven only (no Docker):
 
@@ -52,28 +155,50 @@ Maven only (no Docker):
 mvn clean install -DskipTests
 ```
 
-## Multi-arch `buildx` and loading into Docker Desktop
-
-`build.sh` uses `--platform linux/amd64,linux/arm64` **without** `--push`. If the Docker step fails to load locally, build one platform:
+### Single-platform Docker (if buildx load fails)
 
 ```bash
-cd /path/to/tcamt-2
+cd tcamt-lite-client && npx grunt build --prod && cd ..
 mvn clean install -DskipTests
 docker buildx build --platform linux/amd64 --load -t tcamt-prm/tcamt-webapp:1.0.0-local .
 docker tag tcamt-prm/tcamt-webapp:1.0.0-local tcamt-prm/tcamt-webapp:latest
 ```
 
-## Frontend (Angular / Grunt)
+Base image (root `Dockerfile`): **Tomcat 9.0.105** on **JDK 8** (Temurin).
 
-The **WAR** does not replace the **Grunt** dev workflow. See `tcamt-lite-client/README.md` and `tcamt-deploy/readme.md`.
+---
 
-## CDC `vocabServiceClient` (removed)
+## Vendored modules
 
-`tcamt-lite-service` no longer declares **`gov.cdc.phinvads:vocabServiceClient`**; it was unused in Java sources.
+### `hit-resource-client`
 
-## If Maven fails on missing artifacts
+Java sources under `hit-resource-client/src/main/java` are vendored from the standalone HIT project (Maven coordinates `gov.nist.hit.resources.deploy:hit-resource-client:2.0.3`).
 
-Typical issues:
+### `tcamt-acmgt`
 
-- **Network** blocks **`hit-nexus.nist.gov`** (corporate firewall, offline builds). In that case install the missing `gov.nist:*` artifacts into `~/.m2` from an environment that can reach Nexus.
-- Stale **“not found in Central”** cache: delete the artifact’s folder under `~/.m2/repository/...` or run **`mvn -U`** once.
+Vendored from legacy **`igamt-lite-acmgt`**. The unused `igamt-lite-domain` dependency and test-only `SecurityRequestPostProcessors.java` were removed.
+
+---
+
+## Troubleshooting
+
+### Maven
+
+| Issue | Fix |
+|-------|-----|
+| Missing `gov.nist:*` artifacts | Check network access to `hit-nexus.nist.gov`; or install JARs into `~/.m2` from a machine that can reach Nexus |
+| Stale “not found in Central” cache | Delete the folder under `~/.m2/repository/...` or run `mvn -U` once |
+
+### Frontend
+
+| Issue | Fix |
+|-------|-----|
+| Empty UI after clone | Run `npm install` and `npx bower install` in `tcamt-lite-client/` |
+| Wrong Node version | `nvm use` in `tcamt-lite-client/` (expects **13.12.0**) |
+
+---
+
+## Removed / notes
+
+- **`gov.cdc.phinvads:vocabServiceClient`** — removed from `tcamt-lite-service` (unused).
+- HL7 profile XSD references point to **`prometheuscomputing/hl7-v2-schemas-hid`** (`main` branch).

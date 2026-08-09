@@ -848,7 +848,7 @@ public class GenerationUtil {
 		rootElement.setAttribute("UUID", new ObjectId().toString());
 		rootElement.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
 		rootElement.setAttribute("xsi:noNamespaceSchemaLocation",
-				"https://raw.githubusercontent.com/Jungyubw/NIST_healthcare_hl7_v2_profile_schema/master/Schema/NIST%20Validation%20Schema/ConformanceContext.xsd");
+				"https://raw.githubusercontent.com/prometheuscomputing/hl7-v2-schemas-hid/main/src/main/resources/hl7-v2-schemas/ConformanceContext.xsd");
 
 		Element elmMetaData = xmlDoc.createElement("MetaData");
 		elmMetaData.setAttribute("Name", "Contextbased Constrations");
