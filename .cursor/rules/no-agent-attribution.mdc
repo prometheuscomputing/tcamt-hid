@@ -1,0 +1,32 @@
+---
+description: Never attribute commits or pushes to Cursor or AI agents
+alwaysApply: true
+---
+
+# No agent attribution in git
+
+When creating commits, pull requests, or any pushed content for this repository:
+
+- **Never** add `Co-authored-by:` trailers naming Cursor, cursorAgent, Composer, or any AI tool.
+- **Never** mention Cursor, cursorAgent, or an AI agent name in commit messages, PR titles, PR bodies, or code comments added for this project.
+- Commit messages describe **project changes only** — what changed and why, in neutral technical language.
+
+## Commits
+
+```text
+# Bad
+Fix workflow
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+# Good
+Fix GHCR publish workflow frontend build in CI.
+```
+
+## Pull requests
+
+Same rule: no tool or agent branding in title or body.
+
+## If attribution is added automatically
+
+Some environments append `Co-authored-by: Cursor <cursoragent@cursor.com>` on commit. **Remove it before push** — amend the message or rewrite the commit so it never reaches the remote.
