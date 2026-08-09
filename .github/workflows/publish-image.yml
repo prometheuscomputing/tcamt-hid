@@ -1,10 +1,8 @@
 name: Publish TCAMT image
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - transition
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -12,18 +10,19 @@ permissions:
 
 jobs:
   publish:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ github.event.release.tag_name }}
 
-      - name: Set image tags
+      - name: Set image tags from release
         id: meta
         run: |
-          echo "short_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
-          echo "pr=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          tag="${{ github.event.release.tag_name }}"
+          version="${tag#v}"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node 13
         uses: actions/setup-node@v4
@@ -66,6 +65,6 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/prometheuscomputing/tcamt-hid:transition
-            ghcr.io/prometheuscomputing/tcamt-hid:sha-${{ steps.meta.outputs.short_sha }}
-            ghcr.io/prometheuscomputing/tcamt-hid:pr-${{ steps.meta.outputs.pr }}
+            ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.tag }}
+            ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.version }}
+            ghcr.io/prometheuscomputing/tcamt-hid:latest

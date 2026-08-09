@@ -226,15 +226,15 @@ The Dockerfile copies only **`error.html`** and **`tcamt.war`**. `.dockerignore`
 
 ### Pulling a published image (HealthIT team)
 
-Pre-built images are published to **GitHub Container Registry (GHCR)** automatically when a **pull request is merged into `transition`**. Pushes to feature branches and open PR updates do **not** publish an image.
+Pre-built images are published to **GitHub Container Registry (GHCR)** when a **GitHub Release is published** on this repo. Merging a PR alone does **not** publish an image — create a release to ship a version.
 
 **Image:** `ghcr.io/prometheuscomputing/tcamt-hid`
 
 | Tag | Meaning |
 |-----|---------|
-| `transition` | Latest merge to `transition` |
-| `sha-abc1234` | Specific merge commit (7-char SHA) |
-| `pr-42` | Image from merged PR #42 |
+| `2.1.0` | Release version (from GitHub Release tag; `v` prefix stripped if present) |
+| `v2.1.0` | Same release, exact Git tag name (when the release tag includes `v`) |
+| `latest` | Most recently published release |
 | `2.1.0-transition.2` | Earlier manual publish (legacy) |
 
 **Access:** Members of the [**healthit** team](https://github.com/orgs/prometheuscomputing/teams/healthit) with access to this repo **do not** need the package to be public. Use your own GitHub account — you do not need a token from whoever published the image.
@@ -250,10 +250,9 @@ Create the token at **GitHub → Settings → Developer settings → Personal ac
 **Pull and run:**
 
 ```bash
-docker pull ghcr.io/prometheuscomputing/tcamt-hid:transition
-# or pin to a specific merge:
-docker pull ghcr.io/prometheuscomputing/tcamt-hid:sha-abc1234
-docker pull ghcr.io/prometheuscomputing/tcamt-hid:pr-42
+docker pull ghcr.io/prometheuscomputing/tcamt-hid:2.1.0
+# or floating latest release:
+docker pull ghcr.io/prometheuscomputing/tcamt-hid:latest
 ```
 
 App context path: **`/tcamt/`** (e.g. `http://host:8080/tcamt/`).
@@ -270,9 +269,17 @@ If `docker pull` is denied, ask an org admin to confirm the [**healthit** team](
 
 ### Publishing via GitHub Actions (maintainers)
 
-Images build **only when a PR is merged into `transition`** (workflow: **Publish TCAMT image**). No manual trigger; no publish on every commit to a branch.
+**Version = GitHub Release tag.** The workflow (**Publish TCAMT image**) runs when you **publish a release** (not on draft save).
 
-Each merge pushes tags `transition`, `sha-<commit>`, and `pr-<number>` to GHCR after `verify-no-secrets.sh` passes.
+1. Merge changes into **`transition`** (via PR).
+2. Create a Git tag on that commit, e.g. **`v2.1.0`** or **`2.1.0`**.
+3. **GitHub → Releases → Draft a new release** → choose the tag → **Publish release**.
+4. Actions builds the image and pushes:
+   - `ghcr.io/prometheuscomputing/tcamt-hid:<tag>` (exact release tag)
+   - `ghcr.io/prometheuscomputing/tcamt-hid:<version>` (`v` stripped, e.g. `2.1.0`)
+   - `ghcr.io/prometheuscomputing/tcamt-hid:latest`
+
+Use semver tags (`2.1.0`, `2.1.1`, …) so deployers can pin a clear version. `pom.xml` (`1.0.0-SNAPSHOT`) is **not** used for Docker tags today.
 
 Manual publish (emergency only; requires `write:packages` on your token):
 
