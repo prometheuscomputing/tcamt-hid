@@ -35,6 +35,7 @@ jobs:
             for (const name of ['karma-jasmine-jquery', 'karma-phantomjs-launcher', 'karma-chrome-launcher', 'karma-jasmine', 'grunt-karma', 'karma', 'jasmine-core']) {
               delete p.devDependencies[name];
             }
+            delete p.scripts.preinstall;
             fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
           "
           rm -f package-lock.json
