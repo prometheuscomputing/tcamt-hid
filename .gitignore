@@ -1,6 +1,7 @@
 tcamt-lite-client/.idea/
 tcamt-lite-client/bower_components/
 tcamt-lite-client/node_modules/
+tcamt-lite-client/snapshots/*.tar.gz
 .classpath
 .project
 .settings/

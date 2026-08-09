@@ -121,6 +121,8 @@ Skip tests:
 mvn clean install -DskipTests
 ```
 
+**Backend-only changes:** the production UI is already in `tcamt-lite-controller/src/main/webapp/` (committed). You do **not** need Grunt unless you changed `tcamt-lite-client/`. See **`FRONTEND-SNAPSHOT.md`** for fast builds and frozen dependency snapshots.
+
 Maven-only rebuild (UI unchanged):
 
 ```bash

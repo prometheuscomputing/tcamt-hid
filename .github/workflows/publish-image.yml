@@ -24,12 +24,23 @@ jobs:
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
+      - name: Check if frontend rebuild is needed
+        id: frontend
+        run: |
+          if bash scripts/needs-frontend-build.sh; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Node 13
+        if: steps.frontend.outputs.needed == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "13.12.0"
 
       - name: Frontend build
+        if: steps.frontend.outputs.needed == 'true'
         working-directory: tcamt-lite-client
         run: |
           git config --global url."https://github.com/".insteadOf "git://github.com/"
@@ -37,6 +48,10 @@ jobs:
           npm ci --ignore-scripts
           npx bower install --allow-root
           npx grunt build --prod
+
+      - name: Skip frontend (use committed webapp)
+        if: steps.frontend.outputs.needed != 'true'
+        run: echo "Using committed tcamt-lite-controller/src/main/webapp/ — backend-only build"
 
       - name: Set up Java 8
         uses: actions/setup-java@v4
