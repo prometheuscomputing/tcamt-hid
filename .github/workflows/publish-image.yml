@@ -28,18 +28,7 @@ jobs:
         run: |
           git config --global url."https://github.com/".insteadOf "git://github.com/"
           git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-          # Karma stack is only for unit tests; omit it so npm install works in CI.
-          node -e "
-            const fs = require('fs');
-            const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-            for (const name of ['karma-jasmine-jquery', 'karma-phantomjs-launcher', 'karma-chrome-launcher', 'karma-jasmine', 'grunt-karma', 'karma', 'jasmine-core']) {
-              delete p.devDependencies[name];
-            }
-            delete p.scripts.preinstall;
-            fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
-          "
-          rm -f package-lock.json
-          npm install
+          npm ci --ignore-scripts
           npx bower install --allow-root
           npx grunt build --prod
 
