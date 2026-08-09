@@ -34,11 +34,12 @@ Deploy to Tomcat at context path **`/tcamt`** (e.g. `http://localhost:8080/tcamt
 | **Maven** | **3.6+** | |
 | **Network** | NIST Nexus reachable | `gov.nist:hl7-v2-validation`, `validation-proxy`, etc. |
 
-NIST Maven repositories (parent `pom.xml`):
+NIST Maven repositories (parent `pom.xml` → `<repositories>`):
 
-- `https://hit-nexus.nist.gov/repository/releases/`
-- `https://hit-nexus.nist.gov/repository/public/`
-- `https://hit-nexus.nist.gov/repository/snapshots/`
+- `https://hit-nexus.nist.gov/repository/releases/` (`hit-nexus-releases`)
+- `https://hit-nexus.nist.gov/repository/snapshots/` (`hit-nexus-snapshots`)
+
+> **Note (change Nexus URL):** If your org uses a different Nexus (mirror, VPN-only host, or Prometheus-managed repo), update the `<url>` values in the root **`pom.xml`** under `<repositories>` — both `hit-nexus-releases` and `hit-nexus-snapshots`. Keep the `<id>` values or match them in `~/.m2/settings.xml` if you use `<server>` credentials. After changing URLs, clear stale cache if needed: `rm -rf ~/.m2/repository/gov/nist` then `mvn -U clean install -DskipTests`. Alternative without editing the POM: add a Maven **`settings.xml`** profile that points `<repository>` entries at your Nexus base URL (same path suffixes: `/repository/releases/`, `/repository/snapshots/`).
 
 ### Frontend (`tcamt-lite-client/`)
 
@@ -192,7 +193,7 @@ The editor may still load but show Froala branding/watermark or hit license warn
 ### What `build.sh` does
 
 1. **`mvn clean install -DskipTests`** in this repo
-2. **`docker buildx build`** → `ghcr.io/prometheuscomputing/tcamt-hid:<version>`
+2. **`docker buildx build`** → `$IMAGE_NAME:<version>` (default **`tcamt-hid`** for local use)
 
 **Important:** run **`npx grunt build --prod`** in `tcamt-lite-client/` first if you changed frontend code — `build.sh` does not run Grunt.
 
@@ -201,13 +202,19 @@ cd tcamt-lite-client && npx grunt build --prod && cd ..
 ./build.sh -v 1.0.0-local -l
 ```
 
+Push to your registry (set **`IMAGE_NAME`** to match where you host images — GHCR, ECR, Docker Hub, etc.):
+
+```bash
+export IMAGE_NAME=ghcr.io/prometheuscomputing/tcamt-hid   # example
+docker login ghcr.io   # or your registry
+./build.sh -v 2.1.0 -l -p
+```
+
 | Flag | Meaning |
 |------|---------|
 | **`-v`** | Docker image tag (required), e.g. `1.0.0-local` |
-| **`-l`** | Also tag as `ghcr.io/prometheuscomputing/tcamt-hid:latest` |
+| **`-l`** | Also tag as `$IMAGE_NAME:latest` |
 | **`-p`** | Push to registry (after `docker login`) |
-
-> **Note (AWS ECR):** default image is GHCR; override with `IMAGE_NAME=<account>.dkr.ecr.<region>.amazonaws.com/tcamt-hid` before `./build.sh`.
 
 Maven only (no Docker):
 
@@ -220,8 +227,9 @@ mvn clean install -DskipTests
 ```bash
 cd tcamt-lite-client && npx grunt build --prod && cd ..
 mvn clean install -DskipTests
-docker buildx build --platform linux/amd64 --load -t ghcr.io/prometheuscomputing/tcamt-hid:1.0.0-local .
-docker tag ghcr.io/prometheuscomputing/tcamt-hid:1.0.0-local ghcr.io/prometheuscomputing/tcamt-hid:latest
+export IMAGE_NAME=tcamt-hid   # or your full registry path
+docker buildx build --platform linux/amd64 --load -t "$IMAGE_NAME:1.0.0-local" .
+docker tag "$IMAGE_NAME:1.0.0-local" "$IMAGE_NAME:latest"
 ```
 
 Base image (root `Dockerfile`): **Tomcat 9.0.105** on **JDK 8** (Temurin).
@@ -245,8 +253,8 @@ Prefer publishing via **GitHub Release** (see **`DOCKER.md`**). Local fallback:
 cd tcamt-lite-client && npx grunt build --prod && cd ..
 mvn clean install -DskipTests
 ./scripts/verify-no-secrets.sh
-docker build --platform linux/amd64 -t ghcr.io/prometheuscomputing/tcamt-hid:YOUR_TAG .
-docker push ghcr.io/prometheuscomputing/tcamt-hid:YOUR_TAG
+docker build --platform linux/amd64 -t "$IMAGE_NAME:YOUR_TAG" .
+docker push "$IMAGE_NAME:YOUR_TAG"
 ```
 
 ---

@@ -122,6 +122,7 @@
 	</build>
 
 	<!-- NIST HIT artifacts (hl7-v2-validation, validation-proxy, stat-logging) are not on Maven Central -->
+	<!-- To use another Nexus host, change the <url> values below (see BUILD.md). -->
 	<repositories>
 		<repository>
 			<id>hit-nexus-releases</id>

@@ -4,17 +4,24 @@ function header_section() {
 	echo "\033[1;96m\033[43m\x1B[K\n\t\t ** $1 ** \t\t\x1B[K\n\x1B[K\033[0m"
 }
 
-# Default registry/image; override for ECR, e.g.:
-#   IMAGE_NAME=123456789012.dkr.ecr.us-east-1.amazonaws.com/tcamt-hid ./build.sh -v 2.1.0 -p
-IMAGE_NAME="${IMAGE_NAME:-ghcr.io/prometheuscomputing/tcamt-hid}"
+# Image repository (no tag). Set to match your registry before build/push, e.g.:
+#   ghcr.io/prometheuscomputing/tcamt-hid
+#   123456789012.dkr.ecr.us-east-1.amazonaws.com/tcamt-hid
+#   myorg/tcamt-hid
+IMAGE_NAME="${IMAGE_NAME:-tcamt-hid}"
 
 function usage() {
 	cat <<'EOF'
 Usage: ./build.sh -v <image-version> [-l] [-p]
 
-  -v  Docker image tag, e.g. 1.0.0-local (image: ghcr.io/prometheuscomputing/tcamt-hid:<tag>).
-  -l  Also tag the image as ghcr.io/prometheuscomputing/tcamt-hid:latest
-  -p  docker push the built tag(s) (requires docker login)
+  -v  Docker image tag, e.g. 1.0.0-local (tags IMAGE_NAME:<tag>).
+  -l  Also tag as IMAGE_NAME:latest
+  -p  Push built tag(s) to the registry (requires docker login)
+
+Set IMAGE_NAME to your registry path (default: tcamt-hid for local builds).
+Examples:
+  IMAGE_NAME=ghcr.io/prometheuscomputing/tcamt-hid ./build.sh -v 2.1.0 -p
+  IMAGE_NAME=123456789012.dkr.ecr.us-east-1.amazonaws.com/tcamt-hid ./build.sh -v 2.1.0 -p
 
 Build order: (1) mvn clean install in this repo (includes vendored hit-resource-client + tcamt-acmgt), (2) docker buildx.
 
@@ -31,7 +38,7 @@ do
     case "${flag}" in
         v) VERSION=${OPTARG};;
         l) AS_LATEST=y;;
-        p) PUSH_DOCKERHUB=y;;
+        p) PUSH_REGISTRY=y;;
         \?)
             echo "Invalid option: -${OPTARG}" >&2
             usage
@@ -49,8 +56,8 @@ if [ -z "$AS_LATEST" ]; then
     AS_LATEST=n
 fi
 
-if [ -z "$PUSH_DOCKERHUB" ]; then
-    PUSH_DOCKERHUB=n
+if [ -z "$PUSH_REGISTRY" ]; then
+    PUSH_REGISTRY=n
 fi
 
 header_section "Building TCAMT (hit-resource-client + tcamt modules)"
@@ -60,7 +67,7 @@ mvn clean install -DskipTests
 header_section "Verifying WAR contains no embedded secrets (e.g. Froala key)"
 bash "$ROOT_DIR/scripts/verify-no-secrets.sh"
 
-header_section "Building Docker Image version: $VERSION"
+header_section "Building Docker image $IMAGE_NAME:$VERSION"
 docker buildx build --platform linux/amd64,linux/arm64 -t "$IMAGE_NAME:$VERSION" .
 
 if [ "$AS_LATEST" == "y" ];then
@@ -68,7 +75,7 @@ if [ "$AS_LATEST" == "y" ];then
   docker tag "$IMAGE_NAME:$VERSION" "$IMAGE_NAME:latest"
 fi
 
-if [ "$PUSH_DOCKERHUB" == "y" ];then
+if [ "$PUSH_REGISTRY" == "y" ];then
   docker push "$IMAGE_NAME:$VERSION"
   header_section "Image $IMAGE_NAME:$VERSION successfully pushed to registry"
   if [ "$AS_LATEST" == "y" ];then
