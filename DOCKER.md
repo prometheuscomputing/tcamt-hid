@@ -19,6 +19,8 @@ docker pull ghcr.io/prometheuscomputing/tcamt-hid:2.1.0
 - **Platform:** `linux/amd64`
 - **App URL path:** `/tcamt/` (e.g. `http://host:8080/tcamt/`)
 
+> **Note (AWS ECR):** If you deploy on AWS and need the image in your own account, use the same tag with your ECR URI instead — e.g. `123456789012.dkr.ecr.us-east-1.amazonaws.com/tcamt-hid:2.1.0`. Pull from GHCR, `docker tag` to ECR, `docker push`, then point Compose/ECS at the ECR URL. Or set `IMAGE_NAME` when running `./build.sh` (see **`BUILD.md`**).
+
 ---
 
 ## Versioning

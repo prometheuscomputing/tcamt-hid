@@ -192,7 +192,7 @@ The editor may still load but show Froala branding/watermark or hit license warn
 ### What `build.sh` does
 
 1. **`mvn clean install -DskipTests`** in this repo
-2. **`docker buildx build`** → `tcamt-prm/tcamt-webapp:<version>`
+2. **`docker buildx build`** → `ghcr.io/prometheuscomputing/tcamt-hid:<version>`
 
 **Important:** run **`npx grunt build --prod`** in `tcamt-lite-client/` first if you changed frontend code — `build.sh` does not run Grunt.
 
@@ -204,8 +204,10 @@ cd tcamt-lite-client && npx grunt build --prod && cd ..
 | Flag | Meaning |
 |------|---------|
 | **`-v`** | Docker image tag (required), e.g. `1.0.0-local` |
-| **`-l`** | Also tag as `tcamt-prm/tcamt-webapp:latest` |
+| **`-l`** | Also tag as `ghcr.io/prometheuscomputing/tcamt-hid:latest` |
 | **`-p`** | Push to registry (after `docker login`) |
+
+> **Note (AWS ECR):** default image is GHCR; override with `IMAGE_NAME=<account>.dkr.ecr.<region>.amazonaws.com/tcamt-hid` before `./build.sh`.
 
 Maven only (no Docker):
 
@@ -218,8 +220,8 @@ mvn clean install -DskipTests
 ```bash
 cd tcamt-lite-client && npx grunt build --prod && cd ..
 mvn clean install -DskipTests
-docker buildx build --platform linux/amd64 --load -t tcamt-prm/tcamt-webapp:1.0.0-local .
-docker tag tcamt-prm/tcamt-webapp:1.0.0-local tcamt-prm/tcamt-webapp:latest
+docker buildx build --platform linux/amd64 --load -t ghcr.io/prometheuscomputing/tcamt-hid:1.0.0-local .
+docker tag ghcr.io/prometheuscomputing/tcamt-hid:1.0.0-local ghcr.io/prometheuscomputing/tcamt-hid:latest
 ```
 
 Base image (root `Dockerfile`): **Tomcat 9.0.105** on **JDK 8** (Temurin).
