@@ -129,6 +129,54 @@ mvn clean install -DskipTests
 
 ---
 
+## Froala editor (rich text)
+
+TCAMT uses **Froala v2** (`angular-froala` ~2.3.4 in `bower.json`) for test-story and document editing. The license key is **not** hardcoded in the frontend — it is loaded at runtime from the server.
+
+### How it works
+
+1. Backend exposes the key on **`/api/appInfo`** as **`froalaKey`** (`AppInfo.java`).
+2. Frontend **`FroalaOptionsService.js`** builds editor options from that response.
+3. Controllers bind `froala="froalaEditorOptions"` on textareas (test plans, test cases, docs, etc.).
+
+### Setting the key
+
+| Deployment | How to set |
+|------------|------------|
+| **Properties file** | `froala.key=` in `tcamt-lite-controller/src/main/resources/app-web-config.properties` |
+| **JVM system property** | `-Dfroala.key=YOUR_KEY` on Tomcat / `JAVA_OPTS` |
+| **Docker (local Compose)** | `FROALA_KEY=...` in `tcamt/.env` — passed through by `entrypoint.sh` as `-Dfroala.key=...` |
+
+Example for local Docker (`healthit-local-setup/tcamt/.env`):
+
+```bash
+FROALA_KEY=your-froala-v2-license-key
+```
+
+Then restart the app container:
+
+```bash
+docker compose restart tcamt
+```
+
+Example for Tomcat / standalone WAR:
+
+```bash
+export JAVA_OPTS="$JAVA_OPTS -Dfroala.key=your-froala-v2-license-key"
+```
+
+**Do not commit real license keys** to git. Keep them in `.env`, server env, or deployment secrets only.
+
+### Without a key
+
+The editor may still load but show Froala branding/watermark or hit license warnings. Image/file upload URLs come from `appInfo.uploadedImagesUrl` and work independently of the key.
+
+### Dev server note
+
+`grunt serve` (port 9000) proxies API calls to Tomcat when using the full Compose stack. The Froala key is only available once **`AppInfo.get()`** succeeds against a running backend with `froala.key` / `FROALA_KEY` configured.
+
+---
+
 ## Docker image
 
 ### What `build.sh` does
