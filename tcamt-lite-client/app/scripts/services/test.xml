@@ -1,5 +1,5 @@
 <ConformanceProfile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/Jungyubw/NIST_healthcare_hl7_v2_profile_schema/master/Schema/NIST%20Validation%20Schema/Profile.xsd"
+                    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/prometheuscomputing/hl7-v2-schemas-hid/main/src/main/resources/hl7-v2-schemas/Profile.xsd"
                     ID="58b0553ed4c6a721f187666f" Type="Constrainable" HL7Version="2.5.1">
     <MetaData Name="IZ Profiles" OrgName="NIST" Version="No Version Info" Date="May 24, 2016"/>
     <Messages>
