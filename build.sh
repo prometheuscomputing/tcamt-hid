@@ -53,6 +53,9 @@ header_section "Building TCAMT (hit-resource-client + tcamt modules)"
 cd "$ROOT_DIR"
 mvn clean install -DskipTests
 
+header_section "Verifying WAR contains no embedded secrets (e.g. Froala key)"
+bash "$ROOT_DIR/scripts/verify-no-secrets.sh"
+
 header_section "Building Docker Image version: $VERSION"
 docker buildx build --platform linux/amd64,linux/arm64 -t tcamt-prm/tcamt-webapp:$VERSION .
 

@@ -12,3 +12,6 @@ tcamt-lite-repo/target/
 tcamt-lite-resource/target/
 tcamt-lite-service/target/
 /bin/
+.env
+.env.*
+**/secrets/

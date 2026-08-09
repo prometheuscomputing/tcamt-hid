@@ -167,6 +167,14 @@ export JAVA_OPTS="$JAVA_OPTS -Dfroala.key=your-froala-v2-license-key"
 
 **Do not commit real license keys** to git. Keep them in `.env`, server env, or deployment secrets only.
 
+**Do not bake keys into Docker images.** The WAR ships with `froala.key=` empty. Production and local Docker inject the key at **runtime** only (`FROALA_KEY` / `-Dfroala.key`). Before `docker push`, run:
+
+```bash
+./scripts/verify-no-secrets.sh
+```
+
+`build.sh` runs this check automatically after Maven. Never put `FROALA_KEY` in the Dockerfile, build args, or `app-web-config.properties` in git.
+
 ### Without a key
 
 The editor may still load but show Froala branding/watermark or hit license warnings. Image/file upload URLs come from `appInfo.uploadedImagesUrl` and work independently of the key.
@@ -213,6 +221,22 @@ docker tag tcamt-prm/tcamt-webapp:1.0.0-local tcamt-prm/tcamt-webapp:latest
 ```
 
 Base image (root `Dockerfile`): **Tomcat 9.0.105** on **JDK 8** (Temurin).
+
+The Dockerfile copies only **`error.html`** and **`tcamt.war`**. `.dockerignore` excludes `.env`, secrets, and source trees. **Secrets are runtime config** (Compose `.env`, AWS env/Secrets Manager) — not image layers.
+
+### Publishing for others to pull
+
+Build for AWS hosts (`linux/amd64`), verify no secrets, then push to a registry (GHCR, Docker Hub, etc.):
+
+```bash
+cd tcamt-lite-client && npx grunt build --prod && cd ..
+mvn clean install -DskipTests
+./scripts/verify-no-secrets.sh
+docker build --platform linux/amd64 -t ghcr.io/prometheuscomputing/tcamt:YOUR_TAG .
+docker push ghcr.io/prometheuscomputing/tcamt:YOUR_TAG
+```
+
+Your deployer pulls by tag; they set `FROALA_KEY` (and DB/Mongo) in **their** environment, not in the image.
 
 ---
 
