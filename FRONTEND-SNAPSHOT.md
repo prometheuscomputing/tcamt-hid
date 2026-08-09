@@ -54,15 +54,44 @@ Backend-only releases are much faster.
 
 Lockfiles alone are not enough: npm packages can be **unpublished**, and Bower has **no lockfile** — only `bower.json` plus whatever lands in `bower_components/`.
 
+### Recommended: `deps-backup/` folder
+
+A full copy of installed dependencies lives under **`tcamt-lite-client/deps-backup/v1/`**:
+
+```
+deps-backup/v1/
+  node_modules/       (~250 MB)
+  bower_components/   (~180 MB)
+  package-lock.json
+  bower.json
+  .nvmrc
+  manifest.json
+```
+
+**Create** (once, while npm/Bower still work):
+
+```bash
+./scripts/backup-frontend-deps.sh create v1
+```
+
+**Restore** (never run npm install / bower install again):
+
+```bash
+./scripts/backup-frontend-deps.sh restore v1
+cd tcamt-lite-client && npx grunt build --prod
+```
+
+The backup folders are **gitignored** (too large for git). Copy `deps-backup/v1/` to team storage, S3, or zip it onto a GitHub Release. See **`tcamt-lite-client/deps-backup/README.md`**.
+
 Three layers of protection:
 
 | Layer | What | Protects against |
 |-------|------|------------------|
 | 1 | **`package-lock.json`** (in git) | Accidental npm version drift |
 | 2 | **`bower.json` pinned versions + git SHAs** | Accidental bower drift |
-| 3 | **Offline deps snapshot** | Registry takedowns, retired packages |
+| 3 | **`deps-backup/v1/`** | Registry takedowns, retired packages |
 
-### Create a snapshot (once, or when intentionally upgrading deps)
+### Alternative: tarball snapshot
 
 ```bash
 ./scripts/snapshot-frontend-deps.sh create v1
@@ -116,8 +145,7 @@ mvn clean install -DskipTests
 ### Frontend change
 
 ```bash
-./scripts/snapshot-frontend-deps.sh restore v1   # if archive present
-# … or npm ci + bower install on first machine
+./scripts/backup-frontend-deps.sh restore v1
 cd tcamt-lite-client && npx grunt build --prod && cd ..
 git add tcamt-lite-controller/src/main/webapp/
 ```
@@ -141,8 +169,9 @@ git add tcamt-lite-controller/src/main/webapp/
 
 | Script | Purpose |
 |--------|---------|
+| `scripts/backup-frontend-deps.sh` | **Create / restore `deps-backup/` folder** (recommended) |
 | `scripts/needs-frontend-build.sh` | Exit 0 if Grunt is required; 1 if committed webapp is enough |
-| `scripts/snapshot-frontend-deps.sh` | Create / restore / verify offline deps archive |
+| `scripts/snapshot-frontend-deps.sh` | Create / restore compressed tarball (optional) |
 
 ---
 

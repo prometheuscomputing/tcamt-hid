@@ -1,6 +1,8 @@
 tcamt-lite-client/.idea/
 tcamt-lite-client/bower_components/
 tcamt-lite-client/node_modules/
+tcamt-lite-client/deps-backup/*/node_modules/
+tcamt-lite-client/deps-backup/*/bower_components/
 tcamt-lite-client/snapshots/*.tar.gz
 .classpath
 .project

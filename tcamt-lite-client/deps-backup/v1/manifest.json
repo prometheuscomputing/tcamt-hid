@@ -1,0 +1,9 @@
+{
+  "label": "v1",
+  "created": "2026-08-09T17:31:01Z",
+  "node": "v13.12.0",
+  "npm": "6.14.4",
+  "node_modules_size": "253M",
+  "bower_components_size": "188M",
+  "notes": "Restore with: ./scripts/backup-frontend-deps.sh restore v1"
+}
