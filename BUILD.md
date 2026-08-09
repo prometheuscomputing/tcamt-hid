@@ -224,19 +224,60 @@ Base image (root `Dockerfile`): **Tomcat 9.0.105** on **JDK 8** (Temurin).
 
 The Dockerfile copies only **`error.html`** and **`tcamt.war`**. `.dockerignore` excludes `.env`, secrets, and source trees. **Secrets are runtime config** (Compose `.env`, AWS env/Secrets Manager) — not image layers.
 
-### Publishing for others to pull
+### Pulling a published image (HealthIT team)
 
-Build for AWS hosts (`linux/amd64`), verify no secrets, then push to a registry (GHCR, Docker Hub, etc.):
+Pre-built images are published to **GitHub Container Registry (GHCR)** from the **`transition`** branch via the **Publish TCAMT image** GitHub Actions workflow (Actions → workflow_dispatch).
+
+**Image:** `ghcr.io/prometheuscomputing/tcamt-hid`
+
+| Tag | Meaning |
+|-----|---------|
+| `2.1.0-transition.2` (example) | Specific release build |
+| `transition` | Latest build from the `transition` branch |
+
+**Access:** HealthIT / `prometheuscomputing` team members with access to this repo **do not** need the package to be public. Use your own GitHub account — you do not need a token from whoever published the image.
+
+**One-time Docker login to GHCR:**
+
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+```
+
+Create the token at **GitHub → Settings → Developer settings → Personal access tokens** with at least **`read:packages`** (and **`repo`** if the package is private).
+
+**Pull and run:**
+
+```bash
+docker pull ghcr.io/prometheuscomputing/tcamt-hid:2.1.0-transition.2
+# or latest transition build:
+docker pull ghcr.io/prometheuscomputing/tcamt-hid:transition
+```
+
+App context path: **`/tcamt/`** (e.g. `http://host:8080/tcamt/`).
+
+**Runtime configuration (not in the image):**
+
+| Setting | Notes |
+|---------|--------|
+| **`FROALA_KEY`** | Froala v2 license — set in env / `JAVA_OPTS` / Compose `.env` |
+| **MySQL** | Application database |
+| **MongoDB** | Test artifacts / grid storage |
+
+If `docker pull` is denied, ask an org admin to confirm your team has **read** access under **Packages → tcamt-hid → Package settings → Manage access**.
+
+### Publishing via GitHub Actions (maintainers)
+
+On **`transition`**, run **Actions → Publish TCAMT image → Run workflow** and enter a tag (e.g. `2.1.0-transition.3`). The workflow builds frontend + Maven, runs `verify-no-secrets.sh`, and pushes to GHCR.
+
+Manual publish (requires `write:packages` on your token):
 
 ```bash
 cd tcamt-lite-client && npx grunt build --prod && cd ..
 mvn clean install -DskipTests
 ./scripts/verify-no-secrets.sh
-docker build --platform linux/amd64 -t ghcr.io/prometheuscomputing/tcamt:YOUR_TAG .
-docker push ghcr.io/prometheuscomputing/tcamt:YOUR_TAG
+docker build --platform linux/amd64 -t ghcr.io/prometheuscomputing/tcamt-hid:YOUR_TAG .
+docker push ghcr.io/prometheuscomputing/tcamt-hid:YOUR_TAG
 ```
-
-Your deployer pulls by tag; they set `FROALA_KEY` (and DB/Mongo) in **their** environment, not in the image.
 
 ---
 
