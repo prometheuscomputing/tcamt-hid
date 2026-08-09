@@ -40,7 +40,6 @@ import gov.nist.healthcare.nht.acmgt.dto.ResponseMessage;
 import gov.nist.healthcare.nht.acmgt.dto.domain.Account;
 import gov.nist.healthcare.nht.acmgt.repo.AccountRepository;
 import gov.nist.healthcare.nht.acmgt.service.UserService;
-import gov.nist.healthcare.tools.hl7.v2.igamt.lite.domain.IGDocument;
 import gov.nist.healthcare.tools.hl7.v2.tcamt.lite.domain.Categorization;
 import gov.nist.healthcare.tools.hl7.v2.tcamt.lite.domain.GrandProfile;
 import gov.nist.healthcare.tools.hl7.v2.tcamt.lite.domain.GrandTestPlan;

@@ -45,7 +45,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-war-plugin</artifactId>
-					<version>2.1.1</version>
+					<version>3.4.0</version>
 					<configuration>
 						<packagingExcludes>WEB-INF/web.xml</packagingExcludes>
 					</configuration>
@@ -94,14 +94,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>gov.nist.healthcare.tools.hl7.v2.igamt.lite</groupId>
-			<artifactId>igamt-lite-acmgt</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
-		<dependency>
 			<groupId>gov.nist.healthcare.tools.hl7.v2.tcamt.lite</groupId>
-			<artifactId>tcamt-lite-service</artifactId>
+			<artifactId>tcamt-acmgt</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
@@ -129,7 +123,11 @@
 			</exclusions>
 		</dependency>
 
-
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
 
 		<!-- <dependency> <groupId>org.codehaus.jackson</groupId> <artifactId>jackson-mapper-asl</artifactId> 
 			<version>1.9.13</version> </dependency> <dependency> <groupId>org.codehaus.jackson</groupId> 
@@ -255,12 +253,6 @@
 		</dependency>
 	</dependencies>
 
-	<repositories>
-		<repository>
-			<id>spring-milestones</id>
-			<url>https://repo.spring.io/milestone</url>
-		</repository>
-	</repositories>
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

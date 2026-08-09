@@ -9,6 +9,8 @@
 	<description>tcamt-lite tool</description>
 	<packaging>pom</packaging>
 	<modules>
+		<module>hit-resource-client</module>
+		<module>tcamt-acmgt</module>
 		<module>tcamt-lite-domain</module>
 		<module>tcamt-lite-repo</module>
 		<module>tcamt-lite-service</module>
@@ -16,7 +18,8 @@
 	</modules>
 
 	<properties>
-		<spring.version>4.1.7.RELEASE</spring.version>
+		<!-- 4.3.x aligns with spring-data-jpa 1.11.x (transitive spring-orm); 4.1 + 4.3 mix caused NoSuchMethodError on ReflectionUtils -->
+		<spring.version>4.3.25.RELEASE</spring.version>
 	</properties>
 
 	<dependencies>
@@ -117,5 +120,29 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+
+	<!-- NIST HIT artifacts (hl7-v2-validation, validation-proxy, stat-logging) are not on Maven Central -->
+	<repositories>
+		<repository>
+			<id>hit-nexus-releases</id>
+			<url>https://hit-nexus.nist.gov/repository/releases/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>hit-nexus-snapshots</id>
+			<url>https://hit-nexus.nist.gov/repository/snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 
 </project>
