@@ -226,14 +226,16 @@ The Dockerfile copies only **`error.html`** and **`tcamt.war`**. `.dockerignore`
 
 ### Pulling a published image (HealthIT team)
 
-Pre-built images are published to **GitHub Container Registry (GHCR)** from the **`transition`** branch via the **Publish TCAMT image** GitHub Actions workflow (Actions → workflow_dispatch).
+Pre-built images are published to **GitHub Container Registry (GHCR)** automatically when a **pull request is merged into `transition`**. Pushes to feature branches and open PR updates do **not** publish an image.
 
 **Image:** `ghcr.io/prometheuscomputing/tcamt-hid`
 
 | Tag | Meaning |
 |-----|---------|
-| `2.1.0-transition.2` (example) | Specific release build |
-| `transition` | Latest build from the `transition` branch |
+| `transition` | Latest merge to `transition` |
+| `sha-abc1234` | Specific merge commit (7-char SHA) |
+| `pr-42` | Image from merged PR #42 |
+| `2.1.0-transition.2` | Earlier manual publish (legacy) |
 
 **Access:** Members of the [**healthit** team](https://github.com/orgs/prometheuscomputing/teams/healthit) with access to this repo **do not** need the package to be public. Use your own GitHub account — you do not need a token from whoever published the image.
 
@@ -248,9 +250,10 @@ Create the token at **GitHub → Settings → Developer settings → Personal ac
 **Pull and run:**
 
 ```bash
-docker pull ghcr.io/prometheuscomputing/tcamt-hid:2.1.0-transition.2
-# or latest transition build:
 docker pull ghcr.io/prometheuscomputing/tcamt-hid:transition
+# or pin to a specific merge:
+docker pull ghcr.io/prometheuscomputing/tcamt-hid:sha-abc1234
+docker pull ghcr.io/prometheuscomputing/tcamt-hid:pr-42
 ```
 
 App context path: **`/tcamt/`** (e.g. `http://host:8080/tcamt/`).
@@ -267,9 +270,11 @@ If `docker pull` is denied, ask an org admin to confirm the [**healthit** team](
 
 ### Publishing via GitHub Actions (maintainers)
 
-On **`transition`**, run **Actions → Publish TCAMT image → Run workflow** and enter a tag (e.g. `2.1.0-transition.3`). The workflow builds frontend + Maven, runs `verify-no-secrets.sh`, and pushes to GHCR.
+Images build **only when a PR is merged into `transition`** (workflow: **Publish TCAMT image**). No manual trigger; no publish on every commit to a branch.
 
-Manual publish (requires `write:packages` on your token):
+Each merge pushes tags `transition`, `sha-<commit>`, and `pr-<number>` to GHCR after `verify-no-secrets.sh` passes.
+
+Manual publish (emergency only; requires `write:packages` on your token):
 
 ```bash
 cd tcamt-lite-client && npx grunt build --prod && cd ..
