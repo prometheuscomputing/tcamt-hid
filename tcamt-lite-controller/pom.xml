@@ -79,6 +79,30 @@
 			<groupId>gov.nist.healthcare.hl7.v2.unifiedreport</groupId>
 			<artifactId>validation-proxy</artifactId>
 			<version>1.0.9</version>
+			<!--
+				Keep Saxon 8.7 out of the war. It arrives four levels down
+				(validation-proxy -> hit-xml-validation -> schematronValidation)
+				and registers the same JAXP provider class name as the Saxon-HE
+				9.6 declared below. The 2005 implementation can win the service
+				lookup and then fails to instantiate, so TransformerFactory
+				creation throws, ConnectServiceImpl cannot initialise, and the
+				whole application context dies. Tomcat still reports a
+				successful startup and every path answers 404.
+
+				This was latent for years because maven-war-plugin 2.1.1 did not
+				package these two artifacts; 3.4.0 does. Saxon-HE 9.6 provides
+				the same package, so nothing needs them.
+			-->
+			<exclusions>
+				<exclusion>
+					<groupId>net.sf.saxon</groupId>
+					<artifactId>saxon-dom</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>net.sf.saxon</groupId>
+					<artifactId>saxon</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
