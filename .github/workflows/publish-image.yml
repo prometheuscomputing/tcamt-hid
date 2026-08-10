@@ -66,6 +66,9 @@ jobs:
       - name: Verify no secrets in WAR
         run: bash scripts/verify-no-secrets.sh
 
+      - name: Verify no duplicate XSLT providers in WAR
+        run: bash scripts/verify-war-deps.sh
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -73,13 +76,92 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      # Build locally first and prove the application actually serves before
+      # anything is published. A failed Spring context still lets Tomcat report
+      # a successful startup and answer 404 on every path, so "the image was
+      # built" is not evidence that the image works.
+      - name: Build image
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
-          push: true
+          push: false
+          load: true
           tags: |
             ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.tag }}
             ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.version }}
+            ghcr.io/prometheuscomputing/tcamt-hid:latest
+
+      - name: Smoke test the image
+        run: |
+          set -euo pipefail
+          IMAGE="ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.tag }}"
+          NET=tcamt-smoke
+          MYSQL_PW=smoke-root
+          DB_PW=smoke-tcamt
+
+          docker network create "$NET"
+          docker run -d --name smoke-mysql --network "$NET" \
+            -e MYSQL_ROOT_PASSWORD="$MYSQL_PW" -e MYSQL_DATABASE=tcamt_db \
+            -e MYSQL_USER=tcamt -e MYSQL_PASSWORD="$DB_PW" mysql:8.0
+          docker run -d --name smoke-mongo --network "$NET" mongo:4.4
+
+          echo "Waiting for MySQL"
+          for _ in $(seq 1 60); do
+            if docker exec smoke-mysql mysqladmin ping -uroot -p"$MYSQL_PW" --silent >/dev/null 2>&1; then
+              break
+            fi
+            sleep 5
+          done
+
+          # The image has no entrypoint of its own, so supply the JNDI
+          # datasource the application expects and pass Mongo settings as JVM
+          # properties, the same way the Compose setup does.
+          # Supplies the JNDI datasource the application expects. Tomcat parses
+          # this without an XML declaration, so it is left out rather than
+          # depending on the heredoc landing at column zero.
+          mkdir -p smoke
+          cat > smoke/context.xml <<XML
+          <Context>
+            <Resource name="jdbc/igl_jndi" auth="Container" type="javax.sql.DataSource"
+                      maxTotal="20" maxIdle="5" maxWaitMillis="10000"
+                      username="tcamt" password="$DB_PW"
+                      driverClassName="com.mysql.cj.jdbc.Driver"
+                      url="jdbc:mysql://smoke-mysql:3306/tcamt_db?allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
+          </Context>
+          XML
+
+          docker run -d --name smoke-app --network "$NET" -p 8080:8080 \
+            -v "$PWD/smoke/context.xml:/usr/local/tomcat/conf/context.xml:ro" \
+            -e JAVA_OPTS="-Dmongo.host=smoke-mongo -Dmongo.port=27017 -Dmongo.dbname=tcamt_mongo -Djdbc.igl.auth.url=jdbc:mysql://smoke-mysql:3306/tcamt_db?allowPublicKeyRetrieval=true -Djdbc.igl.auth.username=tcamt -Djdbc.igl.auth.password=$DB_PW -Dhibernate.hbm2ddl.auto=update -Dhibernate.dialect=org.hibernate.dialect.MySQL5InnoDBDialect" \
+            "$IMAGE"
+
+          echo "Waiting for the application to serve"
+          ok=0
+          for _ in $(seq 1 60); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://localhost:8080/tcamt/api/appInfo || true)"
+            if [ "$code" = "200" ]; then ok=1; break; fi
+            sleep 5
+          done
+
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::The application did not serve /tcamt/api/appInfo. Publishing aborted."
+            docker logs smoke-app 2>&1 | tail -200
+            exit 1
+          fi
+
+          curl -sS http://localhost:8080/tcamt/api/appInfo
+          echo
+          echo "Smoke test passed"
+
+      - name: Collect smoke test logs
+        if: failure()
+        run: docker logs smoke-app 2>&1 | tail -400 || true
+
+      - name: Push image
+        run: |
+          set -euo pipefail
+          docker push "ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.tag }}"
+          docker push "ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.version }}"
+          docker push "ghcr.io/prometheuscomputing/tcamt-hid:latest"
             ghcr.io/prometheuscomputing/tcamt-hid:latest
