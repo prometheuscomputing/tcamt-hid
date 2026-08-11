@@ -164,4 +164,3 @@ jobs:
           docker push "ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.tag }}"
           docker push "ghcr.io/prometheuscomputing/tcamt-hid:${{ steps.meta.outputs.version }}"
           docker push "ghcr.io/prometheuscomputing/tcamt-hid:latest"
-            ghcr.io/prometheuscomputing/tcamt-hid:latest
