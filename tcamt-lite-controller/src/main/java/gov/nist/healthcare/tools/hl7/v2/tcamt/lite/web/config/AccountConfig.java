@@ -173,11 +173,21 @@ public class AccountConfig {
 		mailSender.setHost(env.getProperty("mail.host"));
 		mailSender.setPort(Integer.valueOf(env.getProperty("mail.port")));
 		mailSender.setProtocol(env.getProperty("mail.protocol"));
+		// A relay that authenticates needs a login and a TLS upgrade; an open
+		// relay needs neither. Both come from configuration so one build
+		// serves either.
+		String username = env.getProperty("mail.username");
+		if (username != null && !username.isEmpty()) {
+			mailSender.setUsername(username);
+			mailSender.setPassword(env.getProperty("mail.password"));
+		}
 		Properties javaMailProperties = new Properties();
 		javaMailProperties.setProperty("mail.smtp.auth",
-				env.getProperty("mail.auth"));
+				env.getProperty("mail.auth", "false"));
+		javaMailProperties.setProperty("mail.smtp.starttls.enable",
+				env.getProperty("mail.starttls.enable", "false"));
 		javaMailProperties.setProperty("mail.debug",
-				env.getProperty("mail.debug"));
+				env.getProperty("mail.debug", "false"));
 
 		mailSender.setJavaMailProperties(javaMailProperties);
 		return mailSender;
