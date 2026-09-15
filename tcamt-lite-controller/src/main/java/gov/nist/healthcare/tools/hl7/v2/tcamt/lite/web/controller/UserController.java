@@ -762,13 +762,13 @@ public class UserController {
 
 	private void sendApplicationConfirmationNotification(Account acc) {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
-		msg.setSubject("NIST TCAMT Application Received");
+		msg.setSubject("TCAMT Application Received");
 		msg.setTo(acc.getEmail());
 		msg.setText("Dear "
 				+ acc.getUsername()
 				+ " \n\n"
-				+ "Thank you for submitting an application for use of the NIST TCAMT. You will be notified via email (using the email address you provided in your application) as to whether your application is approved or not approved."
-				+ "\n\n" + "Sincerely, " + "\n\n" + "The NIST TCAMT Team"
+				+ "Thank you for submitting an application for use of the TCAMT. You will be notified via email (using the email address you provided in your application) as to whether your application is approved or not approved."
+				+ "\n\n" + "Sincerely, " + "\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus"
 				+ "\n\n" + "P.S: If you need help, contact us at '"
 				+ ADMIN_EMAIL + "'");
 		try {
@@ -781,13 +781,13 @@ public class UserController {
 	private void sendAccountRegistrationNotification(Account acc) {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 
-		msg.setSubject("Welcome! You are successfully registered on NIST TCAMT");
+		msg.setSubject("Welcome! You are successfully registered on TCAMT");
 		msg.setTo(acc.getEmail());
 		msg.setText("Dear " + acc.getUsername() + " \n\n"
-				+ "You've successfully registered on the NIST TCAMT Site."
+				+ "You've successfully registered on the TCAMT site."
 				+ " \n" + "Your username is: " + acc.getUsername() + " \n\n"
 				+ "Please refer to the user guide for the detailed steps. "
-				+ "\n\n" + "Sincerely, " + "\n\n" + "The NIST TCAMT Team"
+				+ "\n\n" + "Sincerely, " + "\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus"
 				+ "\n\n" + "P.S: If you need help, contact us at '"
 				+ ADMIN_EMAIL + "'");
 
@@ -825,7 +825,7 @@ public class UserController {
 				+ acc.getPhone()
 				+ "\n"
 				+ " \n\n"
-				+ "Sincerely, " + "\n\n" + "The NIST TCAMT Team" + "\n\n");
+				+ "Sincerely, " + "\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus" + "\n\n");
 		try {
 			this.mailSender.send(msg);
 		} catch (MailException ex) {
@@ -837,14 +837,14 @@ public class UserController {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 
 		msg.setTo(acc.getEmail());
-		msg.setSubject("NIST TCAMT Account Approval Notification ");
+		msg.setSubject("TCAMT Account Approval Notification ");
 		msg.setText("Dear "
 				+ acc.getUsername()
 				+ " \n\n"
 				+ "**** If you have not requested a new account, please disregard this email **** \n\n\n"
 				+ "Your account has been approved and you can proceed "
 				+ "to login .\n" + "\n\n" + "Sincerely, " + "\n\n"
-				+ "The NIST TCAMT Team" + "\n\n"
+				+ "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus" + "\n\n"
 				+ "P.S: If you need help, contact us at '" + ADMIN_EMAIL + "'");
 		try {
 			this.mailSender.send(msg);
@@ -858,7 +858,7 @@ public class UserController {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 
 		msg.setTo(acc.getEmail());
-		msg.setSubject("NIST TCAMT Registration Notification ");
+		msg.setSubject("TCAMT Registration Notification ");
 		msg.setText("Dear "
 				+ acc.getUsername()
 				+ " \n\n"
@@ -869,7 +869,7 @@ public class UserController {
 				+ "Copy and paste the following url to your browser to initiate the password change:\n"
 				+ url + " \n\n"
 				+ "Please refer to the user guide for the detailed steps. "
-				+ "\n\n" + "Sincerely, " + "\n\n" + "The NIST TCAMT Team"
+				+ "\n\n" + "Sincerely, " + "\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus"
 				+ "\n\n" + "P.S: If you need help, contact us at '"
 				+ ADMIN_EMAIL + "'");
 
@@ -885,14 +885,14 @@ public class UserController {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 
 		msg.setTo(acc.getEmail());
-		msg.setSubject("NIST TCAMT Password Reset Request Notification");
+		msg.setSubject("TCAMT Password Reset Request Notification");
 		msg.setText("Dear "
 				+ acc.getUsername()
 				+ " \n\n"
 				+ "**** If you have not requested a password reset, please disregard this email **** \n\n\n"
 				+ "You password reset request has been processed.\n"
 				+ "Copy and paste the following url to your browser to initiate the password change:\n"
-				+ url + " \n\n" + "Sincerely, " + "\n\n" + "The TCAMT Team"
+				+ url + " \n\n" + "Sincerely, " + "\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus"
 				+ "\n\n" + "P.S: If you need help, contact us at '"
 				+ ADMIN_EMAIL + "'");
 
@@ -907,10 +907,10 @@ public class UserController {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 
 		msg.setTo(acc.getEmail());
-		msg.setSubject("NIST TCAMT Password Change Notification");
+		msg.setSubject("TCAMT Password Change Notification");
 		msg.setText("Dear " + acc.getUsername() + " \n\n"
 				+ "Your password has been successfully changed." + " \n\n"
-				+ "Sincerely,\n\n" + "The NIST TCAMT Team");
+				+ "Sincerely,\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus");
 
 		try {
 			this.mailSender.send(msg);
@@ -923,12 +923,12 @@ public class UserController {
 			String newPassword) {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 		msg.setTo(acc.getEmail());
-		msg.setSubject("NIST TCAMT Password Change Notification");
+		msg.setSubject("TCAMT Password Change Notification");
 		msg.setText("Dear " + acc.getUsername() + " \n\n"
 				+ "Your password has been successfully changed." + " \n\n"
 				+ "Your new temporary password is ." + newPassword + " \n\n"
 				+ "Please update your password once logged in. \n\n"
-				+ "Sincerely,\n\n" + "The NIST TCAMT Team");
+				+ "Sincerely,\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus");
 
 		try {
 			this.mailSender.send(msg);
@@ -941,11 +941,11 @@ public class UserController {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 
 		msg.setTo(acc.getEmail());
-		msg.setSubject("NIST TCAMT Password Rest Notification");
+		msg.setSubject("TCAMT Password Rest Notification");
 		msg.setText("Dear " + acc.getUsername() + " \n\n"
 				+ "Your password has been successfully reset." + " \n"
 				+ "Your username is: " + acc.getUsername() + " \n\n"
-				+ "Sincerely,\n\n" + "The NIST TCAMT Team");
+				+ "Sincerely,\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus");
 
 		try {
 			this.mailSender.send(msg);
@@ -958,12 +958,12 @@ public class UserController {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 
 		msg.setTo(acc.getEmail());
-		msg.setSubject("NIST TCAMT Registration and Password Notification");
+		msg.setSubject("TCAMT Registration and Password Notification");
 		msg.setText("Dear " + acc.getUsername() + " \n\n"
 				+ "Your password has been successfully set." + " \n"
 				+ "Your username is: " + acc.getUsername() + " \n"
-				+ "Your registration with the NIST TCAMT is complete."
-				+ " \n\n" + "Sincerely,\n\n" + "The NIST TCAMT Team");
+				+ "Your registration with the TCAMT is complete."
+				+ " \n\n" + "Sincerely,\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus");
 
 		try {
 			this.mailSender.send(msg);
@@ -976,10 +976,10 @@ public class UserController {
 		SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
 
 		msg.setTo(acc.getEmail());
-		msg.setSubject("NIST TCAMT Username Notification");
+		msg.setSubject("TCAMT Username Notification");
 		msg.setText("Dear " + acc.getUsername() + " \n\n"
 				+ "Your username is: " + acc.getUsername() + " \n\n"
-				+ "Sincerely,\n\n" + "The NIST TCAMT Team");
+				+ "Sincerely,\n\n" + "The TCAMT Team, part of the Standards & Interoperability Testing Tools (SITT), hosted by Valitheus");
 
 		try {
 			this.mailSender.send(msg);

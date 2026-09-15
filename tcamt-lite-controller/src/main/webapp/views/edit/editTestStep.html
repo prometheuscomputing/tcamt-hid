@@ -516,7 +516,7 @@
 							</div>
 						</md-content>
 					</md-tab>
-					<md-tab ng-disabled="!isNotManualTestStep()" md-on-select="initTestStepTab(5);" label="STD/NIST XML">
+					<md-tab ng-disabled="!isNotManualTestStep()" md-on-select="initTestStepTab(5);" label="STD/SITT XML">
 						<div class="col-md-12" ng-if="!hasValidEr7Message()"><p style ="color:red;"> HL7 Encoded Message is not processable. Please check.</p></div>
 						<md-content ng-if="hasValidEr7Message()" class="md-padding">
 							<div class="row">
@@ -525,7 +525,7 @@
 										<uib-accordion-heading>
 											<span style="color: white !important;">
 												<i class="fa" ng-class="{'fa-caret-down': nistStd.nist, 'fa-caret-right': !nistStd.nist}"></i>
-								 				NIST XML
+								 				SITT XML
 											</span>
 										</uib-accordion-heading>
 										<textarea style="width:100%" ng-model="nistXMLCode" readonly rows="30"/>
@@ -1240,7 +1240,7 @@
 			<tr>
 				<td style="background-color:rgb(198, 222, 255)">Errors</td>
 				<td>
-					Indicates non-conformance to a requirement. Errors do constitute a failed validation. An EHR Product will fail certification if any of the validation reports indicate an Error (unless the Error can be proved to be a false negative; NIST can be consulted to remediate).
+					Indicates non-conformance to a requirement. Errors do constitute a failed validation. An EHR Product will fail certification if any of the validation reports indicate an Error (unless the Error can be proved to be a false negative; the SITT team can be consulted to remediate).
 				</td>
 			</tr>
 			
