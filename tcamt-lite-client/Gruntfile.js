@@ -431,7 +431,7 @@ module.exports = function(grunt) {
 							src : [
 								'fonts/*.*',
 								'bower_components/sass-bootstrap/fonts/*.*',
-								'bower_components/bootstrap-material-design/fonts/Material-Design-Icons.*',
+								'../bower_components/bootstrap-material-design/dist/fonts/Material-Design-Icons.*',
 								'bower_components/font-awesome/fonts/*.*'
 							]
 						} ]

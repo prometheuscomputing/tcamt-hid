@@ -1,0 +1,11 @@
+/* tcamt-chrome-start: TCAMT-specific rules on top of the shared SITT chrome.
+   TCAMT's own stylesheet paints #footer navy with !important (it styled the
+   old NIST site footer), so the branded footer's "Managed by" lockup and the
+   footer links would sit navy on navy. Same weight, later in the file, wins. */
+#footer{background:#f9f9f9 !important;color:#333;padding:0 0 12px;height:auto}
+#footer h5{color:#021a4c}
+#footer .box{color:#555}
+#footer .footer-link{color:#0b5cad;font-weight:700}
+#footer .managed-by .mb-name{color:#021a4c}
+#footer .managed-by .mb-eyebrow,#footer .managed-by .prev-nist{color:#8a93a3}
+/* tcamt-chrome-end */
