@@ -109,7 +109,7 @@ docker pull ghcr.io/prometheuscomputing/tcamt-hid:2.1.0
 ```bash
 docker run --rm -p 8080:8080 \
   -e FROALA_KEY="your-key" \
-  -e DB_HOST=... -e DB_PASSWORD=... \
+  -e DB_HOST=... -e DB_NAME=tcamt_db -e DB_USER=tcamt -e DB_PASSWORD=... \
   -e MONGO_HOST=... \
   ghcr.io/prometheuscomputing/tcamt-hid:2.1.0
 ```
@@ -120,15 +120,25 @@ For local development with MySQL/Mongo, see **`healthit-local-setup`** Compose f
 
 ## Runtime configuration (not in the image)
 
-These are **not** baked into the image. Set them at deploy time:
+Everything a deployment differs in is read by `docker/entrypoint.sh` from the
+environment when the container starts. The image carries neutral defaults
+(`mail.host=localhost`, no-reply addresses, an empty Froala key), so a
+container started without these variables serves the application but talks
+to no real mail relay.
 
 | Variable | Purpose |
 |----------|---------|
-| **`FROALA_KEY`** | Froala v2 editor license |
-| **MySQL** | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` |
-| **MongoDB** | `MONGO_HOST`, `MONGO_PORT`, `MONGO_DBNAME` (use **Mongo 4.4**) |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | MySQL account database, written into the `jdbc/igl_jndi` datasource. Required: the container refuses to start without the host, user and password, because without the datasource every login fails while the pages still answer. |
+| `MONGO_HOST`, `MONGO_PORT`, `MONGO_DBNAME` (`MONGO_USER`, `MONGO_PASSWORD`, `MONGO_AUTHSOURCE` when the server authenticates) | Test plan store (use **Mongo 4.4**) |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_PROTOCOL`, `MAIL_AUTH`, `MAIL_STARTTLS_ENABLE`, `MAIL_DEBUG`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | Account emails (registration, approval, password reset). `MAIL_FROM` is also the sender address the pages show. |
+| `ADMIN_EMAIL` | Where new registrations are announced, and the help address quoted in the emails |
+| `FROALA_KEY` | Froala v2 editor licence |
+| `APP_VERSION` | Version label shown in the header and on `api/appInfo` (CI sets it to the release tag in the smoke test) |
+| `CONNECT_SERVER_URL_FROM`, `CONNECT_SERVER_URL_TO` | Optional. The GVT address the browser is given is `connect.apps` in the properties (the public one). When the server has to reach GVT through another address, for example a private network name behind a proxy that answers the public host with an HTML challenge, set both and the server swaps that prefix before calling GVT. Only the server side is affected; the browser keeps the public address for the post-push redirect. |
+| `HBM2DDL_AUTO`, `HIBERNATE_DIALECT` | Schema handling; default `update` so an empty database gets its schema on first boot |
 
-The image is built with an empty `froala.key` in the WAR; runtime injection is required.
+Each of these becomes a `-D` system property, which the application reads
+ahead of `app-web-config.properties`.
 
 ---
 

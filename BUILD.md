@@ -234,7 +234,7 @@ docker tag "$IMAGE_NAME:1.0.0-local" "$IMAGE_NAME:latest"
 
 Base image (root `Dockerfile`): **Tomcat 9.0.105** on **JDK 8** (Temurin).
 
-The Dockerfile copies only **`error.html`** and **`tcamt.war`**. `.dockerignore` excludes `.env`, secrets, and source trees. **Secrets are runtime config** (Compose `.env`, AWS env/Secrets Manager) — not image layers.
+The Dockerfile copies **`error.html`**, **`tcamt.war`** and **`docker/entrypoint.sh`**, and declares the `jdbc/igl_jndi` datasource in Tomcat's `context.xml` with placeholders the entrypoint fills at start. The runtime variables are listed in **`DOCKER.md`** ("Runtime configuration"). `.dockerignore` excludes `.env`, secrets, and source trees. **Secrets are runtime config** (Compose `.env`, AWS env/Secrets Manager) — not image layers.
 
 ### Pulling a published image (HealthIT team)
 
@@ -256,6 +256,31 @@ mvn clean install -DskipTests
 docker build --platform linux/amd64 -t "$IMAGE_NAME:YOUR_TAG" .
 docker push "$IMAGE_NAME:YOUR_TAG"
 ```
+
+---
+
+## Branding lives in source
+
+The SITT presentation is part of the code, not something applied to a built
+artifact afterwards, so any build of this repository (CI release, a local
+`build.sh`, a rebuild from zero) carries it:
+
+| What | Where |
+|------|-------|
+| Header, footer, home, About, issue pages | `tcamt-lite-client/app/views/*.html` |
+| Tab title, author, no federal analytics loader | `tcamt-lite-client/app/prod/index.html` and `app/dev/index.html` (the build regenerates `app/index.html` from these) |
+| Welcome line, registration notice, expired-credential text | `tcamt-lite-client/app/lang/messages_en.properties` |
+| Shared SITT stylesheet and the TCAMT-specific rules | `tcamt-lite-client/app/styles/_sitt-branding.scss`, `_tcamt-chrome.scss`, imported at the end of `main.scss` |
+| Account email subjects and signatures | `UserController.java` |
+| Neutral mail defaults, public GVT address | `tcamt-lite-controller/src/main/resources/app-web-config.properties` |
+
+`scripts/verify-branding.py` runs in CI after the Maven package and fails the
+release when the WAR still says NIST outside the approved sentences in
+`scripts/brand-allowed.txt` (the Tool Information, Disclaimer and data-use
+paragraphs), or still carries the federal analytics loader or a Google
+Groups link. Run it locally after `mvn clean install -DskipTests`. When a
+sentence that names NIST is approved for a page, add the whole sentence to
+the allow list; never a fragment.
 
 ---
 

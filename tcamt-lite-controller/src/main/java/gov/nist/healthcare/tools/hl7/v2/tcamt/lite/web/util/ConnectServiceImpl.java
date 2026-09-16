@@ -55,6 +55,22 @@ public class ConnectServiceImpl implements ConnectService {
 	  
 	  @Value("${connect.createDomainEndpoint}")
 	  private String CREATE_DOMAN_ENDPOINT;
+	  // The address the browser is given (connect.apps) is not always the one
+	  // this server can reach: behind a proxy the public host answers with an
+	  // HTML challenge where the proxy expects JSON. When both are set, the
+	  // public prefix is swapped for the server-side one before any call.
+	  @Value("${connect.serverUrlFrom:}")
+	  private String serverUrlFrom;
+	  @Value("${connect.serverUrlTo:}")
+	  private String serverUrlTo;
+
+	  private String resolve(String url) {
+	    if (url == null || serverUrlFrom == null || serverUrlFrom.isEmpty() || serverUrlTo == null
+	        || serverUrlTo.isEmpty() || !url.startsWith(serverUrlFrom)) {
+	      return url;
+	    }
+	    return serverUrlTo + url.substring(serverUrlFrom.length());
+	  }
 	  
  
   private RestTemplate restTemplate;
@@ -114,7 +130,7 @@ public class ConnectServiceImpl implements ConnectService {
 	    headers.add("Authorization", "Basic " + authorization);
 	    HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity =
 	        new HttpEntity<LinkedMultiValueMap<String, Object>>(parts, headers);
-	    ResponseEntity<?> response = restTemplate.exchange(url + EXPORT_ENDPOINT,
+	    ResponseEntity<?> response = restTemplate.exchange(resolve(url) + EXPORT_ENDPOINT,
 	        HttpMethod.POST, requestEntity, Map.class);
 		
 	    return response;
@@ -145,7 +161,7 @@ public class ConnectServiceImpl implements ConnectService {
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     headers.add("Authorization", "Basic " + authorization);
     HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(params, headers);
-    ResponseEntity<?> response = restTemplate.postForEntity(url + CREATE_DOMAN_ENDPOINT,
+    ResponseEntity<?> response = restTemplate.postForEntity(resolve(url) + CREATE_DOMAN_ENDPOINT,
          request, Map.class);
     
     System.out.println("DEBUG");
@@ -195,7 +211,7 @@ public class ConnectServiceImpl implements ConnectService {
       headers.add("Authorization", authorization);
       HttpEntity<String> entity = new HttpEntity<String>("", headers);
       ResponseEntity<String> response =
-          restTemplate.exchange(url + LOGIN_ENDPOINT, HttpMethod.POST, entity, String.class);
+          restTemplate.exchange(resolve(url) + LOGIN_ENDPOINT, HttpMethod.POST, entity, String.class);
       if (response.getStatusCode() == HttpStatus.OK) {
         return true;
       }
@@ -213,7 +229,7 @@ public class ConnectServiceImpl implements ConnectService {
       headers.add("Authorization", authorization);
       HttpEntity<String> entity = new HttpEntity<String>("", headers);
       ResponseEntity<List> response =
-          restTemplate.exchange(url + DOMAINS_ENDPOINT, HttpMethod.GET, entity, List.class);
+          restTemplate.exchange(resolve(url) + DOMAINS_ENDPOINT, HttpMethod.GET, entity, List.class);
       return response;
     } catch (HttpClientErrorException e) {
       throw new GVTLoginException(e.getMessage());
