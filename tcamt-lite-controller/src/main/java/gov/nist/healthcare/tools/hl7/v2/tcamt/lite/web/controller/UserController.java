@@ -500,8 +500,7 @@ public class UserController {
 					"invalidUsername", null);
 		}
 
-		userService.changePasswordForUser(acc.getUsername(),
-				acc.getNewPassword());
+		userService.changePasswordForUser(acc.getNewPassword(), acc.getUsername());
 
 		// send email notification
 //		this.sendChangeAccountPasswordNotification(onRecordAccount, newPassword);
@@ -509,6 +508,83 @@ public class UserController {
 		return new ResponseMessage(ResponseMessage.Type.success,
 				"accountPasswordReset", onRecordAccount.getId().toString(),
 				true);
+	}
+
+	@PreAuthorize("hasRole('admin')")
+	@RequestMapping(value = "/accounts/{accountId}/admin-credentials", method = RequestMethod.POST)
+	public ResponseMessage adminUpdateCredentials(
+			@RequestBody AccountChangeCredentials acc,
+			@PathVariable Long accountId) {
+		Account onRecordAccount = accountRepository.findOne(accountId);
+		if (onRecordAccount == null || onRecordAccount.isEntityDisabled()) {
+			return new ResponseMessage(ResponseMessage.Type.danger, "badAccount",
+					accountId.toString());
+		}
+
+		String currentUsername = onRecordAccount.getUsername();
+		String newUsername = acc.getNewUsername() != null ? acc.getNewUsername().trim()
+				: currentUsername;
+		String newEmail = acc.getEmail() != null ? acc.getEmail().trim()
+				: onRecordAccount.getEmail();
+		String providedPassword = acc.getNewPassword() != null ? acc.getNewPassword().trim() : "";
+		boolean usernameChanged = currentUsername != null && !currentUsername.equals(newUsername);
+		boolean hasPassword = !providedPassword.isEmpty();
+
+		if (newUsername == null || newUsername.length() < 4 || newUsername.length() > 50) {
+			return new ResponseMessage(ResponseMessage.Type.danger, "invalidUsername", newUsername);
+		}
+		if (newEmail == null || newEmail.isEmpty() || !newEmail.contains("@")) {
+			return new ResponseMessage(ResponseMessage.Type.danger, "emptyEmail", newEmail);
+		}
+		if (usernameChanged && !hasPassword) {
+			return new ResponseMessage(ResponseMessage.Type.danger, "passwordRequired", newUsername);
+		}
+		if (hasPassword && providedPassword.length() < 8) {
+			return new ResponseMessage(ResponseMessage.Type.danger, "invalidPassword", null);
+		}
+
+		if (usernameChanged) {
+			Account existing = accountRepository.findByTheAccountsUsername(newUsername);
+			if (existing != null && !existing.getId().equals(accountId)) {
+				return new ResponseMessage(ResponseMessage.Type.danger, "duplicateUsername",
+						newUsername);
+			}
+			if (userService.userExists(newUsername)) {
+				return new ResponseMessage(ResponseMessage.Type.danger, "duplicateUsername",
+						newUsername);
+			}
+		}
+		if (onRecordAccount.getEmail() == null
+				|| !onRecordAccount.getEmail().equalsIgnoreCase(newEmail)) {
+			Account existingEmail = accountRepository.findByTheAccountsEmail(newEmail);
+			if (existingEmail != null && !existingEmail.getId().equals(accountId)) {
+				return new ResponseMessage(ResponseMessage.Type.danger, "duplicateEmail", newEmail);
+			}
+		}
+
+		if (usernameChanged) {
+			try {
+				userService.changeUsername(currentUsername, newUsername);
+			} catch (Exception e) {
+				return new ResponseMessage(ResponseMessage.Type.danger, "duplicateUsername",
+						newUsername);
+			}
+			onRecordAccount.setUsername(newUsername);
+			AccountPasswordReset arp = accountResetPasswordRepository
+					.findByTheAccountsUsername(currentUsername);
+			if (arp != null) {
+				arp.setUsername(newUsername);
+				accountResetPasswordRepository.save(arp);
+			}
+		}
+		if (hasPassword) {
+			userService.changePasswordForUser(providedPassword, onRecordAccount.getUsername());
+		}
+		onRecordAccount.setEmail(newEmail);
+		accountRepository.save(onRecordAccount);
+
+		return new ResponseMessage(ResponseMessage.Type.success, "accountUpdated",
+				onRecordAccount.getId().toString());
 	}
 
 	/**

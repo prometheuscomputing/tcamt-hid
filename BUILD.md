@@ -277,8 +277,7 @@ artifact afterwards, so any build of this repository (CI release, a local
 `scripts/verify-branding.py` runs in CI after the Maven package and fails the
 release when the WAR still says NIST outside the approved sentences in
 `scripts/brand-allowed.txt` (the Tool Information, Disclaimer and data-use
-paragraphs), or still carries the federal analytics loader or a Google
-Groups link. Run it locally after `mvn clean install -DskipTests`. When a
+paragraphs), or still carries the federal analytics loader. Run it locally after `mvn clean install -DskipTests`. When a
 sentence that names NIST is approved for a page, add the whole sentence to
 the allow list; never a fragment.
 

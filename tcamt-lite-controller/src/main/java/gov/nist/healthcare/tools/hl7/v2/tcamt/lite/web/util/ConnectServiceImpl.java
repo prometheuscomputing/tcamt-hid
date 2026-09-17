@@ -88,6 +88,8 @@ public class ConnectServiceImpl implements ConnectService {
           .setHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER).build();
       HttpComponentsClientHttpRequestFactory fct =
           new HttpComponentsClientHttpRequestFactory(httpClient);
+      fct.setConnectTimeout(30000);
+      fct.setReadTimeout(600000);
       this.restTemplate = new RestTemplate(fct);
     } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
       // TODO Auto-generated catch block
@@ -163,8 +165,6 @@ public class ConnectServiceImpl implements ConnectService {
     HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(params, headers);
     ResponseEntity<?> response = restTemplate.postForEntity(resolve(url) + CREATE_DOMAN_ENDPOINT,
          request, Map.class);
-    
-    System.out.println("DEBUG");
     return response;
   }
   
@@ -177,7 +177,7 @@ public class ConnectServiceImpl implements ConnectService {
       f = File.createTempFile("IGAMT", ".zip");
       outputStream = new FileOutputStream(f);
       int read = 0;
-      byte[] bytes = new byte[1024];
+      byte[] bytes = new byte[65536];
       while ((read = io.read(bytes)) != -1) {
         outputStream.write(bytes, 0, read);
       }

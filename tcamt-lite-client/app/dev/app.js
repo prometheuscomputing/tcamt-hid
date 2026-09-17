@@ -61,7 +61,7 @@ var
     spinner,
 
 //The list of messages we don't want to displat
-    mToHide = ['usernameNotFound', 'emailNotFound', 'usernameFound', 'emailFound', 'loginSuccess', 'userAdded','igDocumentNotSaved','igDocumentSaved','uploadImageFailed'];
+    mToHide = ['usernameNotFound', 'emailNotFound', 'usernameFound', 'emailFound', 'loginSuccess', 'userAdded','igDocumentNotSaved','igDocumentSaved','uploadImageFailed','accountPasswordReset'];
 
 //the message to be shown to the user
 var msg = {};
@@ -100,10 +100,6 @@ app.config(function ($routeProvider, RestangularProvider, $httpProvider, Keepali
         .when('/forgotten', {
             templateUrl: 'views/account/forgotten.html',
             controller: 'ForgottenCtrl'
-        })
-        .when('/issue', {
-            templateUrl: 'views/issue.html',
-            controller: 'IssueCtrl'
         })
         .when('/registration', {
             templateUrl: 'views/account/registration.html',

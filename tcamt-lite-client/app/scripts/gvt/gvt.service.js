@@ -37,7 +37,7 @@ angular.module('igl').factory('GVTSvc',
             httpHeaders['target-auth'] = auth;
             httpHeaders['target-url'] = targetUrl;
             httpHeaders['target-domain'] = targetDomain;
-            return $http.post('api/testplans/' + id + '/connect',{headers:httpHeaders});
+            return $http.post('api/testplans/' + id + '/connect', {}, {headers:httpHeaders});
         };
 
 
