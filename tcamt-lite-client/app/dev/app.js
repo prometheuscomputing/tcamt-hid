@@ -316,7 +316,7 @@ app.config(function ($routeProvider, RestangularProvider, $httpProvider, Keepali
     notificationsConfigProvider.setAutoHide(true);
 
     // delay before hide
-    notificationsConfigProvider.setHideDelay(4000);
+    notificationsConfigProvider.setHideDelay(2000);
 
     // delay between animation and removing the nofitication
     notificationsConfigProvider.setAutoHideAnimationDelay(1200);
@@ -558,7 +558,7 @@ app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, u
         var opts = {
             message: message,
             hide: true,
-            hideDelay: hideDelayMs != null ? hideDelayMs : 4000
+            hideDelay: hideDelayMs != null ? hideDelayMs : 2000
         };
         notifications.closeAll();
         if (type === 'danger' || type === 'error') {
