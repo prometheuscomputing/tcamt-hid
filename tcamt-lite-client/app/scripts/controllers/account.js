@@ -3,8 +3,8 @@
 /* "newcap": false */
 
 angular.module('tcl')
-.controller('UserProfileCtrl', ['$scope', '$resource', 'AccountLoader', 'Account', 'userInfoService', '$location', 'notifications', '$timeout',
-    function ($scope, $resource, AccountLoader, Account, userInfoService, $location, notifications, $timeout) {
+.controller('UserProfileCtrl', ['$scope', '$rootScope', '$resource', 'AccountLoader', 'Account', 'userInfoService', '$location',
+    function ($scope, $rootScope, $resource, AccountLoader, Account, userInfoService, $location) {
         var PasswordChange = $resource('api/accounts/:id/passwordchange', {id:'@id'});
 
         $scope.accountpwd = {};
@@ -43,14 +43,7 @@ angular.module('tcl')
                 if (payload.type === 'success') {
                     $scope.accountpwd = {};
                     var message = $.i18n.prop('accountPasswordReset');
-                    notifications.closeAll();
-                    notifications.showSuccess({message: message});
-                    $timeout(function() {
-                        var bar = document.querySelector('notifications-bar');
-                        if (bar && bar.innerText && bar.innerText.indexOf(message) !== -1) {
-                            notifications.closeAll();
-                        }
-                    }, 2000);
+                    $rootScope.notifyUser('success', message, 2000);
                 }
             });
         };

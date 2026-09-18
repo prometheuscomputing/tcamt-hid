@@ -73,7 +73,7 @@
                             <li><a class="point" ng-click="openCreateMessageTemplateModal()">Make Message TestData Cate. Template</a></li>
                         </ul>
                     </div>
-                    <button ng-if="accordi.tpDetails" title="Save Changes" type="button" class="btn btn-sm btn-success" ng-click="saveTestPlanAndTemplates()" style="margin-bottom:10px !important;">
+                    <button ng-if="accordi.tpDetails" title="Save Changes" type="button" class="btn btn-sm btn-success" ng-class="{'disabled': !isChanged}" ng-disabled="!isChanged" ng-click="saveTestPlanAndTemplates()" style="margin-bottom:10px !important;">
                         <span><i class="fa fa-floppy-o fa-fw"></i> Save</span>
                     </button>
                 </div>

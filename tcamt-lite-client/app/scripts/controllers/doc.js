@@ -1,5 +1,5 @@
 
-angular.module('tcl').controller('DocCtrl', function ($scope, $rootScope, $document, $templateCache, Restangular, $http, Notification, $sce) {
+angular.module('tcl').controller('DocCtrl', function ($scope, $rootScope, $document, $templateCache, Restangular, $http, $sce) {
     $scope.selected = null;
     $scope.isChanged = false;
     $scope.editMode = true;
@@ -94,10 +94,10 @@ angular.module('tcl').controller('DocCtrl', function ($scope, $rootScope, $docum
         $http.post('api/tcamtdocument/save', $rootScope.tcamtDocument).then(function (response) {
             $scope.selected = null;
             $scope.isChanged = false;
-            Notification.success({message:"Document saved", delay: 1000});
+            $rootScope.notifyUser('success', "Document saved");
         }, function (error) {
             $rootScope.saved = false;
-            Notification.error({message:"Failed to save", delay:1000});
+            $rootScope.notifyUser('error', "Failed to save");
         });
     };
 
