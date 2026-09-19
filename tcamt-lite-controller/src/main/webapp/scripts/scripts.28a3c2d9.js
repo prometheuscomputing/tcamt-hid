@@ -2249,7 +2249,7 @@ var
     spinner,
 
 //The list of messages we don't want to displat
-    mToHide = ['usernameNotFound', 'emailNotFound', 'usernameFound', 'emailFound', 'loginSuccess', 'userAdded', 'igDocumentNotSaved', 'igDocumentSaved', 'uploadImageFailed'];
+    mToHide = ['usernameNotFound', 'emailNotFound', 'usernameFound', 'emailFound', 'loginSuccess', 'userAdded', 'igDocumentNotSaved', 'igDocumentSaved', 'uploadImageFailed', 'accountPasswordReset'];
 
 //the message to be shown to the user
 var msg = {};
@@ -2292,10 +2292,6 @@ app.config(function ($routeProvider, RestangularProvider, $httpProvider, Keepali
         .when('/forgotten', {
             templateUrl: 'views/account/forgotten.html',
             controller: 'ForgottenCtrl'
-        })
-        .when('/issue', {
-            templateUrl: 'views/issue.html',
-            controller: 'IssueCtrl'
         })
         .when('/registration', {
             templateUrl: 'views/account/registration.html',
@@ -2520,7 +2516,7 @@ app.config(function ($routeProvider, RestangularProvider, $httpProvider, Keepali
     notificationsConfigProvider.setAutoHide(true);
 
     // delay before hide
-    notificationsConfigProvider.setHideDelay(30000);
+    notificationsConfigProvider.setHideDelay(2000);
 
     // delay between animation and removing the nofitication
     notificationsConfigProvider.setAutoHideAnimationDelay(1200);
@@ -2684,6 +2680,44 @@ app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, u
 //                console.log('detected msg with text: ' + msg.text);
             msg.show = false;
         }
+    });
+
+    $rootScope.notifyUser = function (type, message, hideDelayMs) {
+        if (message == null || message === '') {
+            return;
+        }
+        var opts = {
+            message: message,
+            hide: true,
+            hideDelay: hideDelayMs != null ? hideDelayMs : 2000
+        };
+        notifications.closeAll();
+        if (type === 'danger' || type === 'error') {
+            notifications.showError(opts);
+        } else if (type === 'warning') {
+            notifications.showWarning(opts);
+        } else {
+            notifications.showSuccess(opts);
+        }
+    };
+
+    $rootScope.showNotification = function (m) {
+        if(m != undefined && m.show && m.text != null) {
+            $rootScope.notifyUser(m.type, $.i18n.prop(m.text));
+            m.text = null;
+            m.type = null;
+            m.show = false;
+        }
+    };
+
+    $rootScope.$watch(function(){
+        return $rootScope.msg().text;
+    }, function (value) {
+        $rootScope.showNotification($rootScope.msg());
+    });
+
+    $rootScope.$watch('language()', function (value) {
+        $rootScope.showNotification($rootScope.msg());
     });
 
     $rootScope.loadUserFromCookie = function () {
@@ -3551,14 +3585,6 @@ angular.module('tcl').factory('loginTestingToolSvc',
 
 
 
-        svc.exportToGVT = function(id, auth,targetUrl,targetDomain) {
-            var httpHeaders = {};
-            httpHeaders['target-auth'] = auth;
-            httpHeaders['target-url'] = targetUrl;
-            httpHeaders['target-domain'] = targetDomain;
-            return $http.post('api/testplans/' + id + '/connect',{headers:httpHeaders});
-        };
-
         svc.login = function(username, password,targetUrl) {
 
             var delay = $q.defer();
@@ -4240,8 +4266,8 @@ angular.module('tcl')
 /* "newcap": false */
 
 angular.module('tcl')
-.controller('UserProfileCtrl', ['$scope', '$resource', 'AccountLoader', 'Account', 'userInfoService', '$location',
-    function ($scope, $resource, AccountLoader, Account, userInfoService, $location) {
+.controller('UserProfileCtrl', ['$scope', '$rootScope', '$resource', 'AccountLoader', 'Account', 'userInfoService', '$location',
+    function ($scope, $rootScope, $resource, AccountLoader, Account, userInfoService, $location) {
         var PasswordChange = $resource('api/accounts/:id/passwordchange', {id:'@id'});
 
         $scope.accountpwd = {};
@@ -4275,9 +4301,13 @@ angular.module('tcl')
             user.password = $scope.accountpwd.currentPassword;
             user.newPassword = $scope.accountpwd.newPassword;
             user.id = $scope.account.id;
-            //TODO: Check return value???
             user.$save().then(function(result){
-                $scope.msg = angular.fromJson(result);
+                var payload = angular.fromJson(result);
+                if (payload.type === 'success') {
+                    $scope.accountpwd = {};
+                    var message = $.i18n.prop('accountPasswordReset');
+                    $rootScope.notifyUser('success', message, 2000);
+                }
             });
         };
 
@@ -4350,45 +4380,8 @@ angular.module('tcl')
             $scope.accountType = "author";
             $scope.scrollbarWidth = $scope.getScrollbarWidth();
 
-//        var PasswordChange = $resource('api/accounts/:id/passwordchange', {id:'@id'});
-            var PasswordChange = $resource('api/accounts/:id/userpasswordchange', {id:'@id'});
-            var ApproveAccount = $resource('api/accounts/:id/approveaccount', {id:'@id'});
-            var SuspendAccount = $resource('api/accounts/:id/suspendaccount', {id:'@id'});
-            $scope.msg = null;
-
-            $scope.accountpwd = {};
-
-            $scope.updateAccount = function() {
-                //not sure it is very clean...
-                //TODO: Add call back?
-                new Account($scope.account).$save();
-                $scope.accountOrig = angular.copy($scope.account);
-            };
-
-            $scope.resetForm = function() {
-                $scope.account = angular.copy($scope.accountOrig);
-            };
-
-            //TODO: Change that: formData is only supported on modern browsers
-            $scope.isUnchanged = function(formData) {
-                return angular.equals(formData, $scope.accountOrig);
-            };
-
-            $scope.changePassword = function() {
-                var user = new PasswordChange();
-                user.username = $scope.account.username;
-                user.password = $scope.accountpwd.currentPassword;
-                user.newPassword = $scope.accountpwd.newPassword;
-                user.id = $scope.account.id;
-                //TODO: Check return value???
-                user.$save().then(function(result){
-                    $scope.msg = angular.fromJson(result);
-                });
-            };
-
             $scope.loadAccounts = function(){
                 if (userInfoService.isAuthenticated() && userInfoService.isAdmin()) {
-                    $scope.msg = null;
                     new MultiAuthorsLoader().then(function (response) {
                         $scope.accountList = response;
                         $scope.tmpAccountList = [].concat($scope.accountList);
@@ -4400,59 +4393,145 @@ angular.module('tcl')
                 $scope.loadAccounts();
             };
 
-            $scope.selectAccount = function(row) {
-                $scope.accountpwd = {};
-                $scope.account = row;
-                $scope.accountOrig = angular.copy($scope.account);
+            var ApproveAccount = $resource('api/accounts/:id/approveaccount', {id:'@id'});
+            var SuspendAccount = $resource('api/accounts/:id/suspendaccount', {id:'@id'});
+
+            $scope.approveAccount = function(row) {
+                var user = new ApproveAccount();
+                user.username = row.username;
+                user.id = row.id;
+                user.$save().then(function() {
+                    row.pending = false;
+                });
             };
 
-            $scope.deleteAccount = function() {
-                $scope.confirmDelete($scope.account);
+            $scope.suspendAccount = function(row) {
+                var user = new SuspendAccount();
+                user.username = row.username;
+                user.id = row.id;
+                user.$save().then(function() {
+                    row.pending = true;
+                });
             };
 
-            $scope.confirmDelete = function (accountToDelete) {
+            $scope.disableAccount = function(row) {
                 var modalInstance = $modal.open({
                     templateUrl: 'ConfirmAccountDeleteCtrl.html',
                     controller: 'ConfirmAccountDeleteCtrl',
                     resolve: {
                         accountToDelete: function () {
-                            return accountToDelete;
+                            return row;
                         },
                         accountList: function () {
                             return $scope.accountList;
                         }
                     }
                 });
-                modalInstance.result.then(function (accountToDelete,accountList ) {
-                    $scope.accountToDelete = accountToDelete;
-                    $scope.accountList = accountList;
-                }, function () {
+                modalInstance.result.then(function () {
+                    $scope.loadAccounts();
                 });
             };
 
-            $scope.approveAccount = function() {
-                var user = new ApproveAccount();
-                user.username = $scope.account.username;
-                user.id = $scope.account.id;
-                user.$save().then(function(result){
-                    $scope.account.pending = false;
-                    $scope.msg = angular.fromJson(result);
+            $scope.editAccount = function(row) {
+                var modalInstance = $modal.open({
+                    templateUrl: 'EditAccountCtrl.html',
+                    controller: 'EditAccountDialogCtrl',
+                    size: 'lg',
+                    backdrop: 'static',
+                    resolve: {
+                        accountRow: function () {
+                            return row;
+                        },
+                        accountList: function () {
+                            return $scope.accountList;
+                        }
+                    }
+                });
+                modalInstance.result.then(function() {
+                    $scope.loadAccounts();
+                }, function() {
+                    $scope.loadAccounts();
                 });
             };
-
-            $scope.suspendAccount = function(){
-                var user = new SuspendAccount();
-                user.username = $scope.account.username;
-                user.id = $scope.account.id;
-                user.$save().then(function(result){
-                    $scope.account.pending = true;
-                    $scope.msg = angular.fromJson(result);
-                });
-            };
-
-
         }
     ]);
+
+angular.module('tcl').controller('EditAccountDialogCtrl', ['$scope', '$modalInstance', '$resource', 'accountRow', 'accountList',
+    function ($scope, $modalInstance, $resource, accountRow, accountList) {
+            var AdminCredentials = $resource('api/accounts/:id/admin-credentials', {id:'@id'});
+
+            $scope.accountList = accountList;
+            $scope.accountpwd = {};
+            $scope.account = angular.copy(accountRow);
+            $scope.accountOrig = angular.copy($scope.account);
+            $scope.msg = null;
+            $scope.credentialErrors = {
+                duplicateUsername: 'That username is already in use.',
+                duplicateEmail: 'That email is already in use.',
+                invalidUsername: 'Username must be 4 to 50 characters.',
+                emptyEmail: 'Enter a valid email address.',
+                invalidPassword: 'Enter a password that meets the requirements.',
+                passwordRequired: 'A new password is required when you change the username.',
+                badAccount: 'That account could not be found.'
+            };
+
+            $scope.closeEditAccount = function() {
+                $modalInstance.close();
+            };
+
+            $scope.usernameChanged = function() {
+                return $scope.account && $scope.accountOrig
+                    && $scope.account.username !== $scope.accountOrig.username;
+            };
+
+            $scope.passwordRequired = function() {
+                return $scope.usernameChanged()
+                    || !!($scope.accountpwd && $scope.accountpwd.newPassword)
+                    || !!($scope.accountpwd && $scope.accountpwd.newPasswordConfirm);
+            };
+
+            $scope.syncAccountRow = function(changes) {
+                if (!$scope.accountList || !$scope.account) {
+                    return;
+                }
+                angular.forEach($scope.accountList, function(item) {
+                    if (item.id === $scope.account.id) {
+                        angular.extend(item, changes);
+                    }
+                });
+            };
+
+            $scope.saveAccount = function() {
+                var req = new AdminCredentials();
+                req.id = $scope.account.id;
+                req.newUsername = $scope.account.username;
+                req.email = $scope.account.email;
+                if ($scope.accountpwd.newPassword) {
+                    req.newPassword = $scope.accountpwd.newPassword;
+                }
+                req.$save().then(function(result) {
+                    var payload = angular.fromJson(result);
+                    $scope.msg = {
+                        type: payload.type,
+                        text: payload.type === 'danger'
+                            ? ($scope.credentialErrors[payload.text] || 'The account could not be updated.')
+                            : 'Account updated.'
+                    };
+                    if (payload.type === 'danger') {
+                        return;
+                    }
+                    $scope.syncAccountRow({
+                        username: $scope.account.username,
+                        email: $scope.account.email
+                    });
+                    $scope.accountOrig = angular.copy($scope.account);
+                    $scope.accountpwd = {};
+                }, function() {
+                    $scope.msg = {type: 'danger', text: 'The account could not be updated.'};
+                });
+            };
+    }
+]);
 
 
 
@@ -4464,9 +4543,14 @@ angular.module('tcl').controller('ConfirmAccountDeleteCtrl', function ($scope, $
         //console.log('Delete for', $scope.accountList[rowIndex]);
         Account.remove({id:accountToDelete.id},
             function() {
-                var rowIndex = $scope.accountList.indexOf(accountToDelete);
-                if(index !== -1){
-                    $scope.accountList.splice(rowIndex,1);
+                var rowIndex = -1;
+                angular.forEach($scope.accountList, function(item, idx) {
+                    if (item.id === accountToDelete.id) {
+                        rowIndex = idx;
+                    }
+                });
+                if (rowIndex !== -1) {
+                    $scope.accountList.splice(rowIndex, 1);
                 }
                 $modalInstance.close($scope.accountToDelete);
             },
@@ -4607,7 +4691,7 @@ angular.module('tcl').controller('ConfigCtrl', function ($document, $scope, $roo
     };
 });
 
-angular.module('tcl').controller('DocCtrl', function ($scope, $rootScope, $document, $templateCache, Restangular, $http, Notification, $sce) {
+angular.module('tcl').controller('DocCtrl', function ($scope, $rootScope, $document, $templateCache, Restangular, $http, $sce) {
     $scope.selected = null;
     $scope.isChanged = false;
     $scope.editMode = true;
@@ -4702,10 +4786,10 @@ angular.module('tcl').controller('DocCtrl', function ($scope, $rootScope, $docum
         $http.post('api/tcamtdocument/save', $rootScope.tcamtDocument).then(function (response) {
             $scope.selected = null;
             $scope.isChanged = false;
-            Notification.success({message:"Document saved", delay: 1000});
+            $rootScope.notifyUser('success', "Document saved");
         }, function (error) {
             $rootScope.saved = false;
-            Notification.error({message:"Failed to save", delay:1000});
+            $rootScope.notifyUser('error', "Failed to save");
         });
     };
 
@@ -4808,8 +4892,8 @@ angular.module('tcl').controller('DownloadCtrl', function ($document, $scope, $r
 'use strict';
 
 angular.module('tcl')
-.controller('ForgottenCtrl', ['$scope', '$resource','Notification',
-    function ($scope, $resource,Notification) {
+.controller('ForgottenCtrl', ['$scope', '$resource',
+    function ($scope, $resource) {
         var ForgottenRequest = $resource('api/sooa/accounts/passwordreset', {username:'@username'});
 
         $scope.requestResetPassword =  function() {
@@ -4819,12 +4903,8 @@ angular.module('tcl')
             	console.log("password changed");
     			console.log(resetReq);
                 if ( resetReq.text === 'resetRequestProcessed' ) {
-        			Notification.success({message:"An e-mail with instructions on how to resest  has been sent ", delay:1500});
                     $scope.username = '';
-                }else if (resetReq.text ==='wrongUsernameOrEmail'){
-        			Notification.error({message:"The username/email address was not recognized. The reset request wont be processed", delay:1500});
                 }
-                
             });
         };
     }
@@ -5978,14 +6058,19 @@ angular.module('tcl').controller('loginTestingTool', ['$scope', '$rootScope', '$
 
 
     $scope.selectTargetUrl = function () {
-        console.log("Target URL Change");
-        console.log($scope.app.url);
         StorageService.set("EXT_TARGET_URL", $scope.app.url);
+        $scope.target.url = $scope.app.url;
         $scope.loadingDomains = false;
         $scope.targetDomains = null;
         $scope.target.domain = null;
         $scope.newDomain = null;
         $scope.error = null;
+    };
+
+    $scope.openGvt = function () {
+        if ($scope.redirectUrl) {
+            $window.open($scope.redirectUrl, '_blank');
+        }
     };
 
     $scope.selectTargetDomain = function () {
@@ -6116,9 +6201,10 @@ angular.module('tcl').controller('loginTestingTool', ['$scope', '$rootScope', '$
             loginTestingToolSvc.exportToGVT($scope.testplan.id, auth, $scope.app.url, $scope.target.domain).then(function (map) {
                 $scope.loading = false;
                 var response = angular.fromJson(map.data);
-                if (response.success === false) {
+                var failed = response.success === false || response.status === 'FAILURE';
+                if (failed || !response.token) {
                     $scope.info.text = "gvtExportFailed";
-                    $scope.info['details'] = response.report;
+                    $scope.info['details'] = response.report || (response.reports && response.reports.join('')) || response.message || "GVT rejected the upload.";
                     $scope.showErrors($scope.info.details);
                     $scope.info.show = true;
                     $scope.info.type = 'danger';
@@ -6128,13 +6214,8 @@ angular.module('tcl').controller('loginTestingTool', ['$scope', '$rootScope', '$
                     $scope.info.text = 'gvtRedirectInProgress';
                     $scope.info.show = true;
                     $scope.info.type = 'info';
+                    $scope.target.url = $scope.app.url;
                     $scope.redirectUrl = $scope.app.url + $rootScope.appInfo.connectUploadTokenContext + "?x=" + encodeURIComponent(token) + "&y=" + encodeURIComponent(auth) + "&d=" + encodeURIComponent($scope.target.domain);
-                   // $scope.redirectUrl = $scope.app.url + $rootScope.appInfo.connectUploadTokenContext + "?x=" + encodeURIComponent(token) + "&d=" + encodeURIComponent($scope.target.domain);
-                    console.log($scope.redirectUrl);
-                    $timeout(function () {
-                        $scope.loading = false;
-                        $window.open($scope.redirectUrl, "_blank");
-                    }, 1000);
                 }
             }, function (error) {
                 $scope.info.text = "gvtExportFailed";
@@ -6198,7 +6279,7 @@ angular.module('tcl').controller('loginTestingTool', ['$scope', '$rootScope', '$
  * Created by Jungyub on 5/12/16
  */
 
-angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $rootScope, $templateCache, Restangular, $http, $filter, $mdDialog, $modal, $cookies, $timeout, userInfoService, ngTreetableParams, $interval, ViewSettings, StorageService, $q, notifications, ElementUtils,$sce,Notification,PreferenceService) {
+angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $rootScope, $templateCache, Restangular, $http, $filter, $mdDialog, $modal, $cookies, $timeout, userInfoService, ngTreetableParams, $interval, ViewSettings, StorageService, $q, notifications, ElementUtils,$sce,PreferenceService) {
     $scope.loading = false;
     $scope.selectedTestCaseTab = 0;
     $scope.selectedTestStepTab = {};
@@ -6337,6 +6418,9 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         $rootScope.selectedTestPlan.testStoryConfig = _.find($rootScope.testStoryConfigs, function(config){ return config.id == $rootScope.selectedTestPlan.testStoryConfigId; });
     };
     $scope.updateGlobalTestStoryConfigForTestGroup = function () {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         for(i in $rootScope.selectedTestPlan.children){
             if($rootScope.selectedTestPlan.children[i].type == 'testcasegroup'){
                 $scope.updateGlobalTestStoryConfigForTestGroupInsideGroup($rootScope.selectedTestPlan.children[i]);
@@ -6354,6 +6438,9 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         }
     };
     $scope.updateGlobalTestStoryConfigForTestCase = function () {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         for(i in $rootScope.selectedTestPlan.children){
             if($rootScope.selectedTestPlan.children[i].type == 'testcasegroup'){
                 $scope.updateGlobalTestStoryConfigForTestCaseInsideGroup($rootScope.selectedTestPlan.children[i]);
@@ -6374,6 +6461,9 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         }
     };
     $scope.updateGlobalManualTestStoryConfigForTestStep = function () {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         for(i in $rootScope.selectedTestPlan.children){
             if($rootScope.selectedTestPlan.children[i].type == 'testcasegroup'){
                 $scope.updateGlobalManualTestStoryConfigForTestStepInsideGroup($rootScope.selectedTestPlan.children[i]);
@@ -6402,6 +6492,9 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         }
     };
     $scope.updateGlobalAutoTestStoryConfigForTestStep = function () {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         for(i in $rootScope.selectedTestPlan.children){
             if($rootScope.selectedTestPlan.children[i].type == 'testcasegroup'){
                 $scope.updateGlobalAutoTestStoryConfigForTestStepInsideGroup($rootScope.selectedTestPlan.children[i]);
@@ -6854,6 +6947,9 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
     };
 
     $scope.handleTestStepType = function () {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         if($rootScope.selectedTestStep.type.includes('MANUAL')) {
             $rootScope.selectedTestStep.integrationProfileId = null;
             $rootScope.selectedTestStep.conformanceProfileId = null;
@@ -6879,6 +6975,9 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
     };
 
     $scope.assignProfile = function() {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         if($rootScope.selectedTestStep.profileIds){
             var res = $rootScope.selectedTestStep.profileIds.split("@");
             if(res.length == 2) {
@@ -7274,6 +7373,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
     };
     $scope.selectTestPlan = function (testplanAbstract) {
         $rootScope.isChanged=false;
+        $scope.beginSuppressDirtyTracking();
         if (testplanAbstract != null) {
             waitingDialog.show('Opening Test Plan...', {dialogSize: 'xs', progressType: 'info'});
             $scope.selectTPTab(1);
@@ -7309,11 +7409,15 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
                     waitingDialog.hide();
                     $scope.subview = "EditTestPlanMetadata.html";
                     $rootScope.isChanged=false;
+                    $scope.endSuppressDirtyTracking();
                 }, 100);
             }, function (error) {
                 $scope.error = error.data;
                 waitingDialog.hide();
+                $scope.endSuppressDirtyTracking();
             });
+        } else {
+            $scope.endSuppressDirtyTracking();
         }
     };
     $scope.print = function (x) {
@@ -7328,6 +7432,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
     };
 
     $scope.editTestPlan = function (testplan) {
+        $scope.beginSuppressDirtyTracking();
         waitingDialog.show('Opening Test Plan...', {dialogSize: 'xs', progressType: 'info'});
         $rootScope.selectedTestPlan = testplan;
         $timeout(function () {
@@ -7343,6 +7448,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $scope.editor = null;
             $scope.editorValidation = null;
             waitingDialog.hide();
+            $scope.endSuppressDirtyTracking();
         }, 100);
     };
     $scope.updateTestGroupTestStoryConfig = function (group) {
@@ -7411,6 +7517,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
     };
     $scope.selectTestCaseGroup = function (testCaseGroup) {
         if (testCaseGroup != null) {
+            $scope.beginSuppressDirtyTracking();
             waitingDialog.show('Opening Test Group...', {dialogSize: 'xs', progressType: 'info'});
             $timeout(function () {
                 $rootScope.selectedTestCaseGroup = testCaseGroup;
@@ -7435,11 +7542,13 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
                     $rootScope.selectedTestCaseGroup.testStoryConfigId = $rootScope.selectedTestCaseGroup.testStoryConfig.id;
                 }
                 waitingDialog.hide();
+                $scope.endSuppressDirtyTracking();
             }, 100);
         }
     };
     $scope.selectTestCase = function (testCase) {
         if (testCase != null) {
+            $scope.beginSuppressDirtyTracking();
             waitingDialog.show('Opening Test Case ...', {dialogSize: 'xs', progressType: 'info'});
             $timeout(function () {
                 $rootScope.selectedTestCase = testCase;
@@ -7466,10 +7575,12 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
                 }
 
                 waitingDialog.hide();
+                $scope.endSuppressDirtyTracking();
             }, 100);
         }
     };
     $scope.initTestStepTab = function (tabnum){
+        $scope.beginSuppressDirtyTracking();
         $scope.selectedTestStepTab.tabNum = tabnum;
         if(tabnum == 2) {
             $scope.initHL7EncodedMessageTab();
@@ -7482,15 +7593,23 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         }else if (tabnum == 6) {
             $scope.generateSupplementDocuments();
         }
+        $scope.endSuppressDirtyTracking();
     };
     $scope.selectTestStep = function (testStep) {
         console.log(testStep);
         waitingDialog.hide();
         if (testStep != null) {
+            $scope.beginSuppressDirtyTracking();
             waitingDialog.show('Opening Test Step ...', {dialogSize: 'xs', progressType: 'info'});
             $rootScope.selectedTestStep = testStep;
             if($rootScope.selectedTestStep.conformanceProfileId && $rootScope.selectedTestStep.integrationProfileId) {
                 $rootScope.selectedTestStep.profileIds = $rootScope.selectedTestStep.conformanceProfileId + '@' + $rootScope.selectedTestStep.integrationProfileId;
+            }
+            if($rootScope.selectedTestStep.tdsXSL == null) {
+                $rootScope.selectedTestStep.tdsXSL = "";
+            }
+            if($rootScope.selectedTestStep.jdXSL == null) {
+                $rootScope.selectedTestStep.jdXSL = "";
             }
 
             $scope.updateCurrentTitle("Test Step", $rootScope.selectedTestStep.name);
@@ -7526,6 +7645,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
                 }
             }
             waitingDialog.hide();
+            $scope.endSuppressDirtyTracking();
         }
     };
     $scope.selectTPTab = function (value) {
@@ -7537,14 +7657,34 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $scope.accordi.tpDetails = false;
         }
     };
+    $scope.suppressDirtyTracking = false;
+    $scope._suppressDirtyGen = 0;
+    $scope.beginSuppressDirtyTracking = function () {
+        $scope.suppressDirtyTracking = true;
+        $scope._suppressDirtyGen++;
+        return $scope._suppressDirtyGen;
+    };
+    $scope.endSuppressDirtyTracking = function (delayMs) {
+        var gen = $scope._suppressDirtyGen;
+        $timeout(function () {
+            if (gen === $scope._suppressDirtyGen) {
+                $scope.suppressDirtyTracking = false;
+            }
+        }, delayMs != null ? delayMs : 500);
+    };
     $scope.recordChanged = function (obj) {
-        if(obj){
-            $rootScope.isChanged = true;
-
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
+        $rootScope.isChanged = true;
+        if(obj && obj.id){
             $rootScope.changesMap[obj.id] = true;
         }
     };
     $rootScope.froalaChange=function (attribute, parent) {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         if(attribute==undefined||attribute==null||attribute===""){
 
         }else{
@@ -7554,6 +7694,9 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         }
     };
     $scope.recordChangeForGroup = function (ids,obj) {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         var changed=angular.copy(JSON.stringify(ids));
         if(ids&&changed!==$rootScope.CpIds){
             $rootScope.isChanged = true;
@@ -7561,6 +7704,9 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         }
     };
     $scope.updateTransport = function () {
+        if($scope.suppressDirtyTracking) {
+            return;
+        }
         if($rootScope.selectedTestPlan.type == 'DataInstance'){
             $rootScope.selectedTestPlan.transport = false;
         }else {
@@ -7576,15 +7722,14 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
                 $rootScope.changesMap={};
                 $rootScope.isChanged = false;
                 $rootScope.saved = true;
-                Notification.success({message:"Test Plan and Templates Saved", delay: 1000});
             }, function (error) {
                 $rootScope.saved = false;
-                Notification.error({message:"Error Templates Saving", delay:1000});
+                $rootScope.notifyUser('error', "Error Templates Saving");
             });
 
         }, function (error) {
             $rootScope.saved = false;
-            Notification.error({message:"Error Saving", delay:1000});
+            $rootScope.notifyUser('error', "Error Saving");
 
         });
     };
@@ -8787,7 +8932,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
                 $scope.refreshTree();
             }
         }
-        Notification.success("Template "+template.name+" Applied")
+        $rootScope.notifyUser('success', "Template "+template.name+" Applied");
         $scope.recordChanged($rootScope.selectedTestStep);
     };
 
@@ -8797,7 +8942,6 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $scope.applyMessageTemplate(template);
         }
         $scope.recordChanged($rootScope.selectedTestStep);
-        Notification.success("Template "+template.name+" Applied")
     };
 
 
@@ -8817,7 +8961,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $scope.applySegmentTemplate(template);
         }
         $scope.recordChanged($rootScope.selectedTestStep);
-        Notification.success("Template "+template.name+" Applied")
+        $rootScope.notifyUser('success', "Template "+template.name+" Applied");
     };
 
     $scope.overwriteER7Template = function (template){
@@ -8830,7 +8974,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         $scope.initTestStepTab($scope.selectedTestStepTab.tabNum);
 
         $scope.recordChanged($rootScope.selectedTestStep);
-        Notification.success("Template "+template.name+" Applied")
+        $rootScope.notifyUser('success', "Template "+template.name+" Applied");
     };
 
     $scope.overwriteER7SegmentTemplate = function (template){
@@ -8847,7 +8991,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         $scope.initTestStepTab($scope.selectedTestStepTab.tabNum);
 
         $scope.recordChanged($rootScope.selectedTestStep);
-        Notification.success("Template "+template.name+" Applied")
+        $rootScope.notifyUser('success', "Template "+template.name+" Applied");
     };
 
     $scope.getNameFromSegment=function(segment){
@@ -9166,7 +9310,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
                 position:$itemScope.$nodeScope.$modelValue.children.length+1});
 
             $scope.activeModel=$itemScope.$nodeScope.$modelValue.children[$itemScope.$nodeScope.$modelValue.children.length-1];
-            Notification.success({message:"New Test Group Added", delay:1000});
+            $rootScope.notifyUser('success', "New Test Group Added");
             $scope.recordChanged();
         }],
 
@@ -9187,7 +9331,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
                     isChanged:true,
                     position:$itemScope.$nodeScope.$modelValue.children.length+1
                 });
-            Notification.success("New Test Case Added");
+            $rootScope.notifyUser('success', "New Test Case Added");
 
             $scope.activeModel=$itemScope.$nodeScope.$modelValue.children[$itemScope.$nodeScope.$modelValue.children.length-1];
             $scope.recordChanged();
@@ -9212,7 +9356,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
 
             });
             $scope.activeModel=$itemScope.$nodeScope.$modelValue.children[$itemScope.$nodeScope.$modelValue.children.length-1];
-            Notification.success("New Test Case Added");
+            $rootScope.notifyUser('success', "New Test Case Added");
             $scope.recordChanged();
         }],
 
@@ -9232,7 +9376,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
 
             });
             $scope.activeModel=$itemScope.$nodeScope.$modelValue.children[$itemScope.$nodeScope.$modelValue.children.length-1];
-            Notification.success("New Test Case Added");
+            $rootScope.notifyUser('success', "New Test Case Added");
             $scope.recordChanged();
         }],
 
@@ -9250,7 +9394,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         ['Delete', function($itemScope) {
             $scope.deleteGroup($itemScope.$modelValue);
             $itemScope.$nodeScope.remove();
-            Notification.success("Test Group "+$itemScope.$modelValue.name +" Deleted");
+            $rootScope.notifyUser('success', "Test Group "+$itemScope.$modelValue.name +" Deleted");
             $scope.updatePositions($itemScope.$nodeScope.$parentNodesScope.$modelValue);
             $scope.recordChanged($itemScope.$nodeScope.$parentNodeScope.$modelValue);
         }]
@@ -9294,7 +9438,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $scope.selectTestStep(newTestStep);
             $scope.activeModel=newTestStep;
             $itemScope.$nodeScope.$modelValue.teststeps.push(newTestStep);
-            Notification.success("New Test Step Added");
+            $rootScope.notifyUser('success', "New Test Step Added");
 
             $scope.recordChanged();
 
@@ -9306,7 +9450,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             clone.position=$itemScope.$nodeScope.$parent.$modelValue.length+1;
             $itemScope.$nodeScope.$parent.$modelValue.push(clone);
             $scope.activeModel=clone;
-            Notification.success("Test Case "+$itemScope.$modelValue.name+" Cloned");
+            $rootScope.notifyUser('success', "Test Case "+$itemScope.$modelValue.name+" Cloned");
 
 
         }],
@@ -9316,7 +9460,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $itemScope.$nodeScope.remove();
             $scope.updatePositions($itemScope.$nodeScope.$parentNodesScope.$modelValue);
             $scope.recordChanged($itemScope.$nodeScope.$parentNodeScope.$modelValue);
-            Notification.success("Test Case "+$itemScope.$modelValue.name+" Deleted");
+            $rootScope.notifyUser('success', "Test Case "+$itemScope.$modelValue.name+" Deleted");
 
         }]
 
@@ -9334,7 +9478,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $scope.activeModel=clone;
             //cloneModel.position=$itemScope.$nodeScope.$parentNodesScope.$modelValue.length+1
             $itemScope.$nodeScope.$parentNodesScope.$modelValue.push(clone);
-            Notification.success("Test Step "+$itemScope.$modelValue.name+" Cloned");
+            $rootScope.notifyUser('success', "Test Step "+$itemScope.$modelValue.name+" Cloned");
 
 
 
@@ -9347,7 +9491,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $itemScope.$nodeScope.remove();
             $scope.updatePositions($itemScope.$nodeScope.$parentNodesScope.$modelValue);
             $scope.recordChanged($itemScope.$nodeScope.$parentNodeScope.$modelValue);
-            Notification.success("Test Step "+$itemScope.$modelValue.name+" Deleted");
+            $rootScope.notifyUser('success', "Test Step "+$itemScope.$modelValue.name+" Deleted");
 
 
         }]
@@ -9365,7 +9509,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         copy.id = new ObjectId().toString();
         $rootScope.template.messageTemplates.push(copy);
         $scope.recordChanged();
-        Notification.success("Template " + template.name + " has been copied");
+        $rootScope.notifyUser('success', "Template " + template.name + " has been copied");
     };
 
     $scope.deleteMessageTemplate = function (template){
@@ -9374,7 +9518,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $rootScope.template.messageTemplates.splice(index, 1);
         }
         $scope.recordChanged();
-        Notification.success("Template " + template.name + " has been deleted");
+        $rootScope.notifyUser('success', "Template " + template.name + " has been deleted");
     };
 
     $scope.openSegmentTemplate = function(segTmp) {
@@ -9388,7 +9532,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         copy.id = new ObjectId().toString();
         $rootScope.template.segmentTemplates.push(copy);
         $scope.recordChanged();
-        Notification.success("Template " + template.name + " has been copied");
+        $rootScope.notifyUser('success', "Template " + template.name + " has been copied");
     };
 
     $scope.deleteSegmentTemplate = function (template){
@@ -9397,13 +9541,12 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $rootScope.template.segmentTemplates.splice(index, 1);
         }
         $scope.recordChanged();
-        Notification.success("Template " + template.name + " has been deleted");
+        $rootScope.notifyUser('success', "Template " + template.name + " has been deleted");
     };
 
     $scope.applyEr7Message = function(er7Tmp) {
         $rootScope.changesMap[$rootScope.selectedTestStep.id]=true;
         $scope.overwriteER7SegmentTemplate(er7Tmp);
-        Notification.success("Template "+er7Tmp.name+" has been applied");
     };
 
     $scope.copyER7Template = function (template){
@@ -9412,7 +9555,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         copy.id = new ObjectId().toString();
         $rootScope.template.er7Templates.push(copy);
         $scope.recordChanged();
-        Notification.success("Template " + template.name + " has been copied");
+        $rootScope.notifyUser('success', "Template " + template.name + " has been copied");
     };
 
     $scope.deleteER7Template = function (template){
@@ -9421,13 +9564,12 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $rootScope.template.er7Templates.splice(index, 1);
         }
         $scope.recordChanged();
-        Notification.success("Template " + template.name + " has been deleted");
+        $rootScope.notifyUser('success', "Template " + template.name + " has been deleted");
     };
 
     $scope.applyEr7Segment = function(er7Tmp) {
         $rootScope.changesMap[$rootScope.selectedTestStep.id]=true;
         $scope.overwriteER7SegmentTemplate(er7Tmp);
-        Notification.success("Template " + er7Tmp.name + " has been applied");
     };
 
     $scope.copyER7SegmentTemplate = function (template){
@@ -9436,7 +9578,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
         copy.id = new ObjectId().toString();
         $rootScope.template.er7segmentTemplates.push(copy);
         $scope.recordChanged();
-        Notification.success("Template " + template.name + " has been copied");
+        $rootScope.notifyUser('success', "Template " + template.name + " has been copied");
     };
 
     $scope.deleteER7SegmentTemplate = function (template){
@@ -9445,7 +9587,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
             $rootScope.template.er7segmentTemplates.splice(index, 1);
         }
         $scope.recordChanged();
-        Notification.success("Template " + template.name + " has been deleted");
+        $rootScope.notifyUser('success', "Template " + template.name + " has been deleted");
     };
 
 
@@ -9716,7 +9858,7 @@ angular.module('tcl').controller('TestPlanCtrl', function ($document, $scope, $r
 
 });
 
-angular.module('tcl').controller('ConfirmUnsavedTestPlan', function ($scope, $modalInstance, $rootScope, $http, Notification) {
+angular.module('tcl').controller('ConfirmUnsavedTestPlan', function ($scope, $modalInstance, $rootScope, $http) {
     $scope.loading = false;
     $scope.saveAndClose = function () {
         $scope.loading = true;
@@ -9730,17 +9872,16 @@ angular.module('tcl').controller('ConfirmUnsavedTestPlan', function ($scope, $mo
                 $rootScope.changesMap={};
                 $rootScope.isChanged = false;
                 $rootScope.saved = true;
-                Notification.success({message:"Test Plan and Templates Saved", delay: 1000});
                 $scope.loading = false;
                 $modalInstance.close();
             }, function (error) {
                 $rootScope.saved = false;
-                Notification.error({message:"Error Templates Saving", delay:1000});
+                $rootScope.notifyUser('error', "Error Templates Saving");
             });
 
         }, function (error) {
             $rootScope.saved = false;
-            Notification.error({message:"Error Saving", delay:1000});
+            $rootScope.notifyUser('error', "Error Saving");
 
         });
     };

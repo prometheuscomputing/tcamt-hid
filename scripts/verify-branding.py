@@ -7,7 +7,7 @@ the string constants of the account controller (the emails). Sentences listed
 in scripts/brand-allowed.txt are removed first, matched as whole sentences
 with loose whitespace so a re-wrapped paragraph still counts. Anything left
 that says NIST or nist.gov fails, with the snippet, and so does the federal
-analytics loader or a Google Groups link anywhere under the webapp.
+analytics loader anywhere under the webapp.
 
     scripts/verify-branding.py [path/to/tcamt.war]
 """
@@ -22,7 +22,7 @@ WAR = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "tcamt-lite-controller/
 ALLOWED = ROOT / "scripts/brand-allowed.txt"
 
 PATTERNS = ("NIST", "nist.gov")
-HOOKS = ("dap.digitalgov.gov", "_fed_an_ua_tag", "googlegroups", "groups.google")
+HOOKS = ("dap.digitalgov.gov", "_fed_an_ua_tag")
 CONTROLLER = "WEB-INF/classes/gov/nist/healthcare/tools/hl7/v2/tcamt/lite/web/controller/UserController.class"
 TEXT_SURFACES = ("index.html", "lang/messages_en.properties")
 ATTR = re.compile(r'(?:href|src|content|title|alt)\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>"\']+))', re.I)

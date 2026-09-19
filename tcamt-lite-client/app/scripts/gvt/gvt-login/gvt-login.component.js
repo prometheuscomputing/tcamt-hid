@@ -33,6 +33,12 @@ angular.module('tcl').controller('GVTLoginCtrl', function ($scope, $rootScope, $
         $scope.error = null;
     };
 
+    $scope.openGvt = function () {
+        if ($scope.redirectUrl) {
+            $window.open($scope.redirectUrl, '_blank');
+        }
+    };
+
     $scope.selectTargetDomain = function () {
         $scope.newDomain = null;
         if ($scope.target.domain != null) {
@@ -137,9 +143,10 @@ angular.module('tcl').controller('GVTLoginCtrl', function ($scope, $rootScope, $
             GVTSvc.exportToGVT($scope.testplan.id, auth, $scope.target.url, $scope.target.domain).then(function (map) {
                 $scope.loading = false;
                 var response = angular.fromJson(map.data);
-                if (response.success === false) {
+                var failed = response.success === false || response.status === 'FAILURE';
+                if (failed || !response.token) {
                     $scope.info.text = "gvtExportFailed";
-                    $scope.info['details'] = response.report;
+                    $scope.info['details'] = response.report || (response.reports && response.reports.join('')) || response.message || "GVT rejected the upload.";
                     $scope.showErrors($scope.info.details);
                     $scope.info.show = true;
                     $scope.info.type = 'danger';
@@ -149,13 +156,7 @@ angular.module('tcl').controller('GVTLoginCtrl', function ($scope, $rootScope, $
                     $scope.info.text = 'gvtRedirectInProgress';
                     $scope.info.show = true;
                     $scope.info.type = 'info';
-                    $scope.redirectUrl = $scope.target.url + $rootScope.appInfo.connectUploadTokenContext + "?x=" + encodeURIComponent(token) + "&d=" + encodeURIComponent($scope.target.domain);
-
-                    //$scope.redirectUrl = $scope.target.url + $rootScope.appInfo.connectUploadTokenContext + "?x=" + encodeURIComponent(token) + "&y=" + encodeURIComponent(auth) + "&d=" + encodeURIComponent($scope.target.domain);
-                    $timeout(function () {
-                        $scope.loading = false;
-                        $window.open($scope.redirectUrl, "_target", "", false);
-                    }, 1000);
+                    $scope.redirectUrl = $scope.target.url + $rootScope.appInfo.connectUploadTokenContext + "?x=" + encodeURIComponent(token) + "&y=" + encodeURIComponent(auth) + "&d=" + encodeURIComponent($scope.target.domain);
                 }
             }, function (error) {
                 $scope.info.text = "gvtExportFailed";

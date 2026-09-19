@@ -82,6 +82,12 @@ public interface UserService {
 	 * @throws BadCredentialsException the oldPassword is incorrect
 	 */
 	public void changePasswordForUser(String newPassword, String username) throws BadCredentialsException;
+
+	/**
+	 * Renames the Spring Security user and authority rows. The password hash is
+	 * salted with the username, so callers must set a new password afterwards.
+	 */
+	public void changeUsername(String oldUsername, String newUsername);
 	
 	/**
 	 * Deletes a user

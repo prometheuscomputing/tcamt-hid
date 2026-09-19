@@ -483,6 +483,10 @@
 
             <md-dialog-content>
                 <div class="md-dialog-content">
+                    <div ng-show="loading" style="margin-bottom: 12px;">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        Building the resource bundle and uploading to GVT. Large test plans can take about a minute.
+                    </div>
                     <div ng-show="exportStep === 'LOGIN_STEP'">
                         <md-card>
                             <md-card-header style="font-size:14px;font-weight: bold">
@@ -660,16 +664,15 @@
                         <md-card>
                             <md-card-content>
                                 <div ng-show="info.type === 'info'">
-                                    <div ng-class="'alert alert-success'" style="font-size:14px;;font-weight: bold">
-                                        <p><i class="fa fa-check" aria-hidden="true"></i> Transaction Successful !
+                                    <div ng-class="'alert alert-success'" style="font-size:14px;font-weight: bold">
+                                        <p><i class="fa fa-check" aria-hidden="true"></i> Upload to GVT succeeded.
                                         </p>
-
                                     </div>
-                                    <p><a style="font-size:14px;" ng-href="{{redirectUrl}}" target="_blank">You are
-                                        now
-                                        being redirected to {{target.url}}.
-                                        Please click here if you are not redirected after 2s</a>
-                                    </p>
+                                    <p>GVT only imports the test plan after this link is opened. Browsers often block the automatic tab, so use the button or paste the URL.</p>
+                                    <p><a style="font-size:14px;word-break:break-all;" ng-href="{{redirectUrl}}" target="_blank">{{redirectUrl}}</a></p>
+                                    <md-button class="btn btn-raised btn-success btn-sm" ng-click="openGvt()" ng-disabled="!redirectUrl">
+                                        <i class="fa fa-external-link"></i> Open in GVT
+                                    </md-button>
                                 </div>
                                 <div ng-show="info.type === 'danger'">
                                     <div ng-if="info.details === null || !info.details">

@@ -149,8 +149,27 @@ public class UserServiceImpl implements UserService {
 		jdbcUserDetailsManager.getJdbcTemplate().update(
 				jdbcUserDetailsManager.DEF_CHANGE_PASSWORD_SQL,
 				newEncodedPassword, username);
-	} 
-	
+	}
+
+	@Override
+	public void changeUsername(String oldUsername, String newUsername) {
+		if (oldUsername == null || newUsername == null || oldUsername.equals(newUsername)) {
+			return;
+		}
+		if (userExists(newUsername)) {
+			throw new IllegalArgumentException("username already exists");
+		}
+		jdbcUserDetailsManager.getJdbcTemplate().update(
+				"insert into users (username, password, enabled, accountNonExpired, accountNonLocked, credentialsNonExpired) "
+						+ "select ?, password, enabled, accountNonExpired, accountNonLocked, credentialsNonExpired from users where username = ?",
+				newUsername, oldUsername);
+		jdbcUserDetailsManager.getJdbcTemplate().update(
+				"update authorities set username = ? where username = ?",
+				newUsername, oldUsername);
+		jdbcUserDetailsManager.getJdbcTemplate().update(
+				"delete from users where username = ?", oldUsername);
+	}
+
 
 	/*
 	 * (non-Javadoc)

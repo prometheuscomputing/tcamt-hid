@@ -61,7 +61,7 @@ var
     spinner,
 
 //The list of messages we don't want to displat
-    mToHide = ['usernameNotFound', 'emailNotFound', 'usernameFound', 'emailFound', 'loginSuccess', 'userAdded','igDocumentNotSaved','igDocumentSaved','uploadImageFailed'];
+    mToHide = ['usernameNotFound', 'emailNotFound', 'usernameFound', 'emailFound', 'loginSuccess', 'userAdded','igDocumentNotSaved','igDocumentSaved','uploadImageFailed','accountPasswordReset'];
 
 //the message to be shown to the user
 var msg = {};
@@ -100,10 +100,6 @@ app.config(function ($routeProvider, RestangularProvider, $httpProvider, Keepali
         .when('/forgotten', {
             templateUrl: 'views/account/forgotten.html',
             controller: 'ForgottenCtrl'
-        })
-        .when('/issue', {
-            templateUrl: 'views/issue.html',
-            controller: 'IssueCtrl'
         })
         .when('/registration', {
             templateUrl: 'views/account/registration.html',
@@ -317,10 +313,10 @@ app.config(function ($routeProvider, RestangularProvider, $httpProvider, Keepali
     IdleProvider.timeout(30);
     KeepaliveProvider.interval(10);
     // auto hide
-    notificationsConfigProvider.setAutoHide(false);
+    notificationsConfigProvider.setAutoHide(true);
 
     // delay before hide
-    notificationsConfigProvider.setHideDelay(30000);
+    notificationsConfigProvider.setHideDelay(2000);
 
     // delay between animation and removing the nofitication
     notificationsConfigProvider.setAutoHideAnimationDelay(1200);
@@ -555,20 +551,28 @@ app.run(function ($rootScope, $location, Restangular, $modal, $filter, base64, u
         $window.location.reload();
     };
 
+    $rootScope.notifyUser = function (type, message, hideDelayMs) {
+        if (message == null || message === '') {
+            return;
+        }
+        var opts = {
+            message: message,
+            hide: true,
+            hideDelay: hideDelayMs != null ? hideDelayMs : 2000
+        };
+        notifications.closeAll();
+        if (type === 'danger' || type === 'error') {
+            notifications.showError(opts);
+        } else if (type === 'warning') {
+            notifications.showWarning(opts);
+        } else {
+            notifications.showSuccess(opts);
+        }
+    };
+
     $rootScope.showNotification = function (m) {
         if(m != undefined && m.show && m.text != null) {
-            var msg = angular.copy(m);
-            var message = $.i18n.prop(msg.text);
-            var type = msg.type;
-            notifications.closeAll();
-            if (type === "danger") {
-                notifications.showError({message: message});
-            } else if (type === 'warning') {
-                notifications.showWarning({message: message});
-            } else if (type === 'success') {
-                notifications.showSuccess({message: message});
-            }
-            //reset
+            $rootScope.notifyUser(m.type, $.i18n.prop(m.text));
             m.text = null;
             m.type = null;
             m.show = false;

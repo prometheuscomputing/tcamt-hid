@@ -8,14 +8,6 @@ angular.module('tcl').factory('loginTestingToolSvc',
 
 
 
-        svc.exportToGVT = function(id, auth,targetUrl,targetDomain) {
-            var httpHeaders = {};
-            httpHeaders['target-auth'] = auth;
-            httpHeaders['target-url'] = targetUrl;
-            httpHeaders['target-domain'] = targetDomain;
-            return $http.post('api/testplans/' + id + '/connect',{headers:httpHeaders});
-        };
-
         svc.login = function(username, password,targetUrl) {
 
             var delay = $q.defer();

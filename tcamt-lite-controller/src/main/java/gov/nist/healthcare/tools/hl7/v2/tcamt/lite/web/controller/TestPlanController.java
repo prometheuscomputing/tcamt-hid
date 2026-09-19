@@ -335,29 +335,13 @@ public class TestPlanController extends CommonController {
 	      HttpServletRequest request, HttpServletResponse response) throws PushRBException {
 	    try {
 	        TestPlan tp = findTestPlan(id);
-	        InputStream testPlanIO = null;
-//	        Set<String> ipidSet = this.findAllProfileIdsInTestPlan(tp);
-
-
-//	          long range = 1234567L;
-//	          Random r = new Random();
-//	          Long rand = (long) (r.nextDouble() * range);
-//
-//	          for (String _id : ipidSet) {
-//	            if (_id != null && !_id.isEmpty()) {
-//	              InputStream[] xmlArrayIO = new InputStream[3];
-//	              xmlArrayIO = new ExportUtil().exportProfileXMLArrayZip(_id, profileService);
-//	            }
-//	          }
-
-	          testPlanIO = new ExportUtil().exportResourceBundleAsZip(tp,
+	        long started = System.currentTimeMillis();
+	        InputStream testPlanIO = new ExportUtil().exportResourceBundleAsZip(tp,
 	              testStoryConfigurationService, profileService);
-	          
-	          
 	      ResponseEntity<?> rsp = gvtService.send(testPlanIO, authorization, url,domain);
 	      Map<String, Object> res = (Map<String, Object>) rsp.getBody();
-          testPlanRepository.save(tp);
-
+	      log.info("GVT upload for test plan {} to {} finished in {} ms", id, url,
+	          System.currentTimeMillis() - started);
 	      return res;
 	    }catch(Exception e){
 	    	throw new PushRBException(e.getLocalizedMessage());

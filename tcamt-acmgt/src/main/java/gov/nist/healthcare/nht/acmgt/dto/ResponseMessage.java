@@ -27,6 +27,7 @@ public class ResponseMessage {
 	private String date;
 	private String scope;
 	private String version;
+	private String generatedPassword;
 
     public ResponseMessage(String date, String scope, String version,
 			String id) { 
@@ -143,7 +144,13 @@ public class ResponseMessage {
 	public void setManualHandle(String manualHandle) {
 		this.manualHandle = manualHandle;
 	}
-    
-    
-    
+
+	public String getGeneratedPassword() {
+		return generatedPassword;
+	}
+
+	public void setGeneratedPassword(String generatedPassword) {
+		this.generatedPassword = generatedPassword;
+	}
+
 }

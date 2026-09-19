@@ -23,6 +23,8 @@ public class AccountChangeCredentials {
 	private String newUsername;
 	private String password;
 	private String newPassword;
+	private String email;
+	private Boolean generatePassword;
 	private Boolean signedConfidentialityAgreement;
 
 	/**
@@ -99,6 +101,22 @@ public class AccountChangeCredentials {
 	 */
 	public void setNewPassword(String newPassword) {
 		this.newPassword = newPassword;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public Boolean getGeneratePassword() {
+		return generatePassword;
+	}
+
+	public void setGeneratePassword(Boolean generatePassword) {
+		this.generatePassword = generatePassword;
 	}
 
 }
