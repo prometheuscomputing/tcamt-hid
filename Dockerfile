@@ -25,6 +25,21 @@ RUN set -eu; \
     ! grep -q 'igl_jndi' "$CTX"; \
     sed -i 's#</Context>#    <Resource name="jdbc/igl_jndi" auth="Container" type="javax.sql.DataSource"\n        maxTotal="20" maxIdle="8" maxWaitMillis="10000"\n        driverClassName="com.mysql.jdbc.Driver"\n        url="jdbc:mysql://container-mysql:3306/tcamt_db?useSSL=false\&amp;allowPublicKeyRetrieval=true\&amp;useUnicode=TRUE\&amp;characterEncoding=UTF-8"\n        username="tcamt" password="db_password" />\n</Context>#' "$CTX"; \
     grep -q 'jdbc/igl_jndi' "$CTX"
+
+# Deployments put this container behind a TLS-terminating proxy or load
+# balancer, so the hop into Tomcat is plain http and the application would
+# write http:// into every address it builds from the request: the image
+# upload URL the editor posts to (which the browser then blocks as mixed
+# content on an https page) and the links in the account emails. The valve
+# makes Tomcat take the scheme from X-Forwarded-Proto and the client address
+# from X-Forwarded-For. It only believes those headers when the connection
+# comes from a private address (Tomcat's default internalProxies), so a
+# container reached directly from the internet ignores them.
+RUN set -eu; \
+    CTX=/usr/local/tomcat/conf/context.xml; \
+    ! grep -q 'RemoteIpValve' "$CTX"; \
+    sed -i 's#</Context>#    <Valve className="org.apache.catalina.valves.RemoteIpValve"\n        protocolHeader="X-Forwarded-Proto" remoteIpHeader="X-Forwarded-For" />\n</Context>#' "$CTX"; \
+    grep -q 'RemoteIpValve' "$CTX"
 COPY ./docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 CMD ["/entrypoint.sh"]

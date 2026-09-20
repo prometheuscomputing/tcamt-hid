@@ -144,6 +144,14 @@ jobs:
           echo
           echo "$info" | grep -q '"version":"${{ steps.meta.outputs.tag }}"' || { echo "::error::APP_VERSION did not reach appInfo"; exit 1; }
           echo "$info" | grep -q 'https://tools.valitheus.com/gvt/' || { echo "::error::connect list does not carry the public GVT address"; exit 1; }
+
+          # Deployments sit behind a TLS-terminating load balancer. The editor
+          # must be handed a path to post uploads to, never an absolute
+          # address built from the request, and Tomcat must take the scheme
+          # from the forwarded header so account emails and stored image
+          # links say https.
+          echo "$info" | grep -q '"uploadedImagesUrl":"/tcamt/api/uploaded_files"' || { echo "::error::appInfo hands the editor an absolute upload address"; exit 1; }
+          docker exec smoke-app grep -q 'RemoteIpValve' /usr/local/tomcat/conf/context.xml || { echo "::error::context.xml does not read X-Forwarded-Proto"; exit 1; }
           echo "Smoke test passed"
 
       - name: Collect smoke test logs
