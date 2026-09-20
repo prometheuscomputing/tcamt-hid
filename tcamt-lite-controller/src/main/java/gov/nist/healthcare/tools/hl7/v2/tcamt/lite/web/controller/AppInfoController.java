@@ -13,7 +13,7 @@
 package gov.nist.healthcare.tools.hl7.v2.tcamt.lite.web.controller;
 
 import gov.nist.healthcare.tools.hl7.v2.tcamt.lite.domain.AppInfo;
-import gov.nist.healthcare.tools.hl7.v2.tcamt.lite.web.util.HttpUtil;
+import gov.nist.healthcare.tools.hl7.v2.tcamt.lite.service.util.FileStorageUtil;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -35,8 +35,14 @@ public class AppInfoController {
 
 	@RequestMapping(method = RequestMethod.GET)
 	public AppInfo info(HttpServletRequest request) {
+		// The editor posts uploads to this address. It is a path on purpose:
+		// the browser resolves it against the page it is on, so it follows
+		// the scheme and host the visitor used. It used to be an absolute URL
+		// built from the first request after start-up and kept for everyone,
+		// which behind a TLS-terminating load balancer came out as http:// and
+		// was blocked as mixed content on the https page.
 		if (appInfo.getUploadedImagesUrl() == null) {
-			appInfo.setUploadedImagesUrl(HttpUtil.getImagesRootUrl(request));
+			appInfo.setUploadedImagesUrl(request.getContextPath() + "/api" + FileStorageUtil.root);
 		}
 		return appInfo;
 	}

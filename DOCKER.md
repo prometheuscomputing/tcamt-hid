@@ -140,6 +140,18 @@ to no real mail relay.
 Each of these becomes a `-D` system property, which the application reads
 ahead of `app-web-config.properties`.
 
+### Behind a load balancer or reverse proxy
+
+When TLS ends in front of the container (a load balancer, CloudFront, nginx),
+the hop into Tomcat is plain http. The image's `context.xml` carries a
+`RemoteIpValve` that takes the scheme from `X-Forwarded-Proto` and the client
+address from `X-Forwarded-For`, so the links in the account emails and the
+addresses stored for uploaded images say `https://`. Tomcat only believes
+those headers from a private address (its default `internalProxies`), so the
+proxy has to reach the container over a private network and has to send
+`X-Forwarded-Proto`. The address the editor uploads to is a path
+(`/tcamt/api/uploaded_files`), so it follows whatever the page was loaded from.
+
 ---
 
 ## Troubleshooting
