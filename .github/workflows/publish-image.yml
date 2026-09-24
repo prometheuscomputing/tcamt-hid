@@ -60,6 +60,14 @@ jobs:
           java-version: "8"
           cache: maven
 
+      # Resolve every dependency and plugin from our Nexus only. This replaces
+      # the settings.xml setup-java just wrote (a GitHub Packages server entry
+      # nothing here deploys to).
+      - name: Maven settings
+        run: |
+          mkdir -p ~/.m2
+          cp .github/maven/settings.xml ~/.m2/settings.xml
+
       - name: Maven package
         run: mvn clean install -DskipTests -B
 

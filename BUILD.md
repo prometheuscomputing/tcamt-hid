@@ -32,12 +32,14 @@ Deploy to Tomcat at context path **`/tcamt`** (e.g. `http://localhost:8080/tcamt
 |------|---------|-------|
 | **JDK** | **8+** (target **1.8**) | JDK 11+ works; POM compiles as Java 8 |
 | **Maven** | **3.6+** | |
-| **Network** | NIST Nexus reachable | `gov.nist:hl7-v2-validation`, `validation-proxy`, etc. |
+| **Network** | Our Nexus reachable (nexus.valitheus.com) | `gov.nist:hl7-v2-validation`, `validation-proxy`, etc. |
 
-NIST Maven repositories (parent `pom.xml` → `<repositories>`):
+Maven repositories for the NIST artifacts (parent `pom.xml` → `<repositories>`), hosted on our Nexus:
 
-- `https://hit-nexus.nist.gov/repository/releases/` (`hit-nexus-releases`)
-- `https://hit-nexus.nist.gov/repository/snapshots/` (`hit-nexus-snapshots`)
+- `https://nexus.valitheus.com/repository/releases/` (`hit-nexus-releases`)
+- `https://nexus.valitheus.com/repository/snapshots/` (`hit-nexus-snapshots`)
+
+The release workflow goes further: it installs `.github/maven/settings.xml`, whose `mirrorOf=*` sends every request, plugins and Central included, to `https://nexus.valitheus.com/repository/public/`. Use the same file locally with `mvn -s .github/maven/settings.xml ...` to build the way CI does.
 
 > **Note (change Nexus URL):** If your org uses a different Nexus (mirror, VPN-only host, or Prometheus-managed repo), update the `<url>` values in the root **`pom.xml`** under `<repositories>` — both `hit-nexus-releases` and `hit-nexus-snapshots`. Keep the `<id>` values or match them in `~/.m2/settings.xml` if you use `<server>` credentials. After changing URLs, clear stale cache if needed: `rm -rf ~/.m2/repository/gov/nist` then `mvn -U clean install -DskipTests`. Alternative without editing the POM: add a Maven **`settings.xml`** profile that points `<repository>` entries at your Nexus base URL (same path suffixes: `/repository/releases/`, `/repository/snapshots/`).
 
@@ -301,7 +303,7 @@ Vendored from legacy **`igamt-lite-acmgt`**. The unused `igamt-lite-domain` depe
 
 | Issue | Fix |
 |-------|-----|
-| Missing `gov.nist:*` artifacts | Check network access to `hit-nexus.nist.gov`; or install JARs into `~/.m2` from a machine that can reach Nexus |
+| Missing `gov.nist:*` artifacts | Check network access to `nexus.valitheus.com`, or build with `-s .github/maven/settings.xml` |
 | Stale “not found in Central” cache | Delete the folder under `~/.m2/repository/...` or run `mvn -U` once |
 
 ### Frontend
