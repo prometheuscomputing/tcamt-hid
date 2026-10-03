@@ -126,7 +126,7 @@
 	<repositories>
 		<repository>
 			<id>hit-nexus-releases</id>
-			<url>https://hit-nexus.nist.gov/repository/releases/</url>
+			<url>https://nexus.valitheus.com/repository/releases/</url>
 			<releases>
 				<enabled>true</enabled>
 			</releases>
@@ -136,7 +136,7 @@
 		</repository>
 		<repository>
 			<id>hit-nexus-snapshots</id>
-			<url>https://hit-nexus.nist.gov/repository/snapshots/</url>
+			<url>https://nexus.valitheus.com/repository/snapshots/</url>
 			<releases>
 				<enabled>false</enabled>
 			</releases>
